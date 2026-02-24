@@ -4,14 +4,14 @@
 
         <!-- TFT COMMANDS TOOLBAR -->
         <div class="tool-group">
-            <label class="tool-group-label">
+            <label>
                 <span>Comandos TFT</span>
                 <span class="tool-group-hint">clique para inserir</span>
             </label>
 
             <!-- FORMAS -->
             <div class="inspector-section-title">Formas</div>
-            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px;">
+            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;">
                 <button class="tft-cmd-btn tool-btn" data-cmd="fillRect"      title="fillRect — Retângulo preenchido"><i data-lucide="square"></i></button>
                 <button class="tft-cmd-btn tool-btn" data-cmd="drawRect"      title="drawRect — Contorno"><i data-lucide="square-dashed"></i></button>
                 <button class="tft-cmd-btn tool-btn" data-cmd="fillRoundRect" title="fillRoundRect — Arredondado"><i data-lucide="square"></i></button>
@@ -23,7 +23,7 @@
 
             <!-- LINHAS -->
             <div class="inspector-section-title">Linhas</div>
-            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px;">
+            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;">
                 <button class="tft-cmd-btn tool-btn" data-cmd="drawLine"      title="drawLine — Linha diagonal"><i data-lucide="minus"></i></button>
                 <button class="tft-cmd-btn tool-btn" data-cmd="drawFastHLine" title="drawFastHLine — Linha horizontal"><i data-lucide="move-horizontal"></i></button>
                 <button class="tft-cmd-btn tool-btn" data-cmd="drawFastVLine" title="drawFastVLine — Linha vertical"><i data-lucide="move-vertical"></i></button>
@@ -32,7 +32,7 @@
 
             <!-- TEXTO -->
             <div class="inspector-section-title">Texto</div>
-            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px;">
+            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;">
                 <button class="tft-cmd-btn tool-btn" data-cmd="drawString"       title="drawString — Texto simples"><i data-lucide="type"></i></button>
                 <button class="tft-cmd-btn tool-btn" data-cmd="drawCentreString" title="drawCentreString — Texto centralizado"><i data-lucide="align-center"></i></button>
             </div>
@@ -90,12 +90,12 @@
             </div>
         </div>
 
-        <div class="tool-group" style="flex:1;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <label style="margin:0;">Elementos na Tela</label>
-                <div id="proto-sync-status" class="sync-badge synced"></div>
+        <div class="tool-group" style="flex:1; min-height:0;">
+            <label style="display:block; margin-bottom:4px;">Elementos na Tela</label>
+            <div style="margin-bottom:8px;">
+                <div id="proto-sync-status" class="sync-badge"></div>
             </div>
-            <div id="proto-element-list" class="layers-list" style="flex:1;overflow-y:auto;"></div>
+            <div id="proto-element-list" class="layers-list" style="flex:1; overflow-y:auto;"></div>
         </div>
 
     </aside>
