@@ -170,6 +170,23 @@ api.MapGet("/ai/image", async (string prompt, int? seed, AgentConfigService conf
     return Results.File(bytes!, "image/png");
 });
 
+api.MapPost("/ai/auto-layout", async (HttpRequest request, AgentConfigService configService, AIService aiService) =>
+{
+    using var doc = await JsonDocument.ParseAsync(request.Body);
+    var root = doc.RootElement;
+    var elementsJson = root.GetProperty("elements").GetRawText();
+    var intent = root.TryGetProperty("intent", out var p) ? p.GetString() ?? "" : "";
+
+    var config = configService.LoadConfig();
+    var apiKey = config.Gemini.ApiKey?.Trim() ?? string.Empty;
+
+    var (success, resultJson, error) = await aiService.OptimizeLayoutAsync(apiKey, elementsJson, intent);
+
+    if (!success) return Results.Problem(error ?? "AI Optimization failed", statusCode: 502);
+    
+    return Results.Content(resultJson!, "application/json");
+});
+
 // --- PROTOTYPE API (Unified Pattern) ---
 api.MapGet("/prototype", (PrototypeService service) => Results.Json(service.GetProject(), jsonOptions));
 

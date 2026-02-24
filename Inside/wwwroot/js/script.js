@@ -114,7 +114,13 @@ class NavigationManager extends EditorModule {
             if (this.app.layers) { // Check if design module is active
                 this._syncDesignToProto();
             }
-            if (this.app.prototype) this.app.prototype.sync();
+            if (this.app.prototype) {
+                this.app.prototype.sync();
+                // Ensure Monaco layout is correct after being shown
+                if (this.app.prototype.view && this.app.prototype.view.editor) {
+                    setTimeout(() => this.app.prototype.view.editor.layout(), 10);
+                }
+            }
         }
 
         if (this.app.status) this.app.status.update(viewId);

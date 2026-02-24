@@ -235,7 +235,7 @@ class PrototypeController {
                     const new565 = this.view.hexTo565(val);
                     code = code.replace(fillRegex, `$1${new565}$3`);
                 }
-                this.view.dom.codePreview.value = code;
+                this.view.updateCodeValue(code);
                 this.view.parseAndRenderCode(code);
             } else {
                 this.view.renderCodePreview(this.model);
@@ -259,6 +259,42 @@ class PrototypeController {
 
         // Code editor → model sync (fires 800ms after user stops typing)
         this.view.onCodeChanged = (code) => this._syncCodeToModel(code);
+
+        // AI AUTO-LAYOUT
+        this.view.onAutoLayout = async (intent) => {
+            const screen = this.model.activeScreen;
+            if (!screen || !this.app || !this.app.api) return;
+
+            this.view.setSyncStatus('saving');
+            try {
+                const resp = await this.app.api.request('/api/ai/auto-layout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        elements: screen.elements,
+                        intent: intent || "Organize harmoniously"
+                    })
+                });
+
+                if (!resp.ok) {
+                    const error = await resp.json();
+                    throw new Error(error.detail || 'Falha no Auto-Layout');
+                }
+
+                const optimizedElements = await resp.json();
+                
+                // Update elements in model (careful to maintain internal state if needed, but here simple replacement is ok)
+                screen.elements = optimizedElements;
+                
+                this.view._codeEditedManually = false;
+                this.queueSave();
+                this.view.setSyncStatus('synced');
+            } catch (err) {
+                console.error('Auto-layout failed:', err);
+                alert('Erro na IA: ' + err.message);
+                this.view.setSyncStatus('error');
+            }
+        };
     }
 
     /**

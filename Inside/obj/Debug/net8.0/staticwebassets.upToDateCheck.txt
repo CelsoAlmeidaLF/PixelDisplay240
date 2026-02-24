@@ -1,4 +1,3 @@
-wwwroot\css\style.css
 wwwroot\js\controller.js
 wwwroot\js\designer.js
 wwwroot\js\model.js
@@ -6,4 +5,5 @@ wwwroot\js\pixelstream.bundle.js
 wwwroot\js\script.js
 wwwroot\js\system-runtime.js
 wwwroot\js\tft-commands.js
+wwwroot\css\style.css
 wwwroot\js\view.js

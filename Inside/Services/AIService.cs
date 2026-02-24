@@ -237,4 +237,68 @@ public class AIService
             return false;
         }
     }
+
+    public async Task<(bool success, string? elementsJson, string? error)> OptimizeLayoutAsync(string apiKey, string elementsJson, string screenIntent)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return (false, null, "Gemini API key not configured");
+        }
+
+        var systemPrompt = @"Você é um Senior UI/UX Designer especializado em sistemas embarcados e displays TFT de baixa resolução (240x240 pixels).
+                            Sua tarefa é reorganizar uma lista de elementos UI (JSON) para que fiquem harmoniosos, respeitando:
+                            1. Grid de 8 pixels (coordenadas x, y devem ser preferencialmente múltiplas de 8).
+                            2. Não sobrepor elementos importantes a menos que seja intencional (ex: texto sobre fundo).
+                            3. Hierarquia visual: elementos principais centralizados ou em destaque.
+                            4. Margens seguras de pelo menos 8 pixels das bordas da tela (0,0 a 240,240).
+                            5. Otimização para legibilidade em telas pequenas.
+
+                            Você deve retornar APENAS o JSON da lista de elementos atualizados, mantendo os IDs originais, mas alterando X, Y, W, H conforme necessário para um design superior.
+                            Não adicione explicações, retorne apenas o JSON puro.";
+
+        var userPrompt = $"Aqui está a lista de elementos atuais (JSON):\n{elementsJson}\n\nIntenção da Tela: {screenIntent}\n\nPor favor, otimize o layout:";
+
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+        var requestBody = new
+        {
+            contents = new[]
+            {
+                new { role = "user", parts = new[] { new { text = $"{systemPrompt}\n\n{userPrompt}" } } }
+            }
+        };
+
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync(url, requestBody, _jsonOptions);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                return (false, null, $"Gemini API Error: {errorBody}");
+            }
+
+            var data = await response.Content.ReadFromJsonAsync<JsonElement>(_jsonOptions);
+            var resultText = data.GetProperty("candidates")[0]
+                                .GetProperty("content")
+                                .GetProperty("parts")[0]
+                                .GetProperty("text").GetString()?.Trim() ?? string.Empty;
+
+            // Clean up Markdown code blocks if AI included them
+            if (resultText.StartsWith("```json"))
+            {
+                resultText = resultText.Substring(7);
+                if (resultText.EndsWith("```")) resultText = resultText.Substring(0, resultText.Length - 3);
+            }
+            else if (resultText.StartsWith("```"))
+            {
+                resultText = resultText.Substring(3);
+                if (resultText.EndsWith("```")) resultText = resultText.Substring(0, resultText.Length - 3);
+            }
+
+            return (true, resultText.Trim(), null);
+        }
+        catch (Exception ex)
+        {
+            return (false, null, ex.Message);
+        }
+    }
 }

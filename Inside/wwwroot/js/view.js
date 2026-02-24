@@ -23,15 +23,22 @@ class PrototypeView {
             this.setupCanvasEvents();
         }
 
-        // Wire code editor → live canvas preview + debounced model sync
+        // Initialize Monaco Editor if available
+        this.editor = null;
+        this.initMonaco();
+
+        // Fallback for hidden textarea sync
         if (this.dom.codePreview) {
             this.dom.codePreview.oninput = () => {
                 this._codeEditedManually = true;
-                this.parseAndRenderCode(this.dom.codePreview.value);
-                // Debounce: after 800ms of no typing, sync code back to model
+                const code = this.dom.codePreview.value;
+                if (this.editor && this.editor.getValue() !== code) {
+                    this.editor.setValue(code);
+                }
+                this.parseAndRenderCode(code);
                 clearTimeout(this._codeSyncTimer);
                 this._codeSyncTimer = setTimeout(() => {
-                    this.onCodeChanged?.(this.dom.codePreview.value);
+                    this.onCodeChanged?.(code);
                 }, 800);
             };
         }
@@ -56,6 +63,62 @@ class PrototypeView {
 
     setApiClient(apiClient) {
         this.api = apiClient;
+    }
+
+    initMonaco() {
+        const container = document.getElementById('proto-code-preview-monaco');
+        if (!container || !window.require) return;
+
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+        require(['vs/editor/editor.main'], () => {
+            this.editor = monaco.editor.create(container, {
+                value: this.dom.codePreview ? this.dom.codePreview.value : "",
+                language: 'cpp',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 13,
+                fontFamily: "'JetBrains Mono', monospace",
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                lineNumbers: 'on',
+                roundedSelection: true,
+                cursorStyle: 'line',
+                tabSize: 4,
+                scrollbar: {
+                    vertical: 'visible',
+                    horizontal: 'visible',
+                    useShadows: false,
+                    verticalHasArrows: false,
+                    horizontalHasArrows: false,
+                    verticalScrollbarSize: 10,
+                    horizontalScrollbarSize: 10
+                }
+            });
+
+            this.editor.onDidChangeModelContent(() => {
+                const code = this.editor.getValue();
+                if (this.dom.codePreview) this.dom.codePreview.value = code;
+
+                this._codeEditedManually = true;
+                this.parseAndRenderCode(code);
+
+                clearTimeout(this._codeSyncTimer);
+                this._codeSyncTimer = setTimeout(() => {
+                    this.onCodeChanged?.(code);
+                }, 800);
+            });
+        });
+    }
+
+    updateCodeValue(code) {
+        if (this.editor) {
+            if (this.editor.getValue() !== code) {
+                this.editor.setValue(code);
+            }
+        }
+        if (this.dom.codePreview) {
+            this.dom.codePreview.value = code;
+        }
     }
 
     setSyncStatus(status) {
@@ -115,6 +178,17 @@ class PrototypeView {
                 }
             };
         });
+
+        // ✨ AI Auto-Layout Button
+        const autoLayoutBtn = document.getElementById('btn-auto-layout');
+        if (autoLayoutBtn) {
+            autoLayoutBtn.onclick = () => {
+                const intent = prompt("Descreva a intenção desta tela para a IA (ex: Painel de Controle, Menu de Opções, Player de Música):", "Organização Harmônica");
+                if (intent !== null) {
+                    this.onAutoLayout?.(intent);
+                }
+            };
+        }
     }
 
     /** Handle JPG/BMP/PNG imported from disk → set as screen background */
@@ -597,90 +671,98 @@ class PrototypeView {
             }
 
             screen.elements.forEach(el => {
-                const color = this.hexTo565(el.color);
+                const color = el.colorBind || this.hexTo565(el.color);
+                const ex = el.xBind || el.x;
+                const ey = el.yBind || el.y;
+                const ew = el.wBind || el.w;
+                const eh = el.hBind || el.h;
                 const nameComment = `// ${el.name}`;
 
                 if (el.asset) {
-                    code += `  tft.pushImage(${el.x}, ${el.y}, ${el.w}, ${el.h}, ${el.asset}); ${nameComment}\n`;
+                    code += `  tft.pushImage(${ex}, ${ey}, ${ew}, ${eh}, ${el.asset}); ${nameComment}\n`;
                 } else {
                     switch (el.type) {
                         case 'fillCircle':
                         case 'circle': // legacy
                         case 'drawCircle': {
-                            const cx = Math.round(el.x + el.w / 2);
-                            const cy = Math.round(el.y + el.h / 2);
-                            const r = Math.round(Math.min(el.w, el.h) / 2);
+                            const cx = el.xBind ? `${ex} + (${ew}/2)` : Math.round(el.x + el.w / 2);
+                            const cy = el.yBind ? `${ey} + (${eh}/2)` : Math.round(el.y + el.h / 2);
+                            const r = el.wBind ? `Math.min(${ew}, ${eh}) / 2` : Math.round(Math.min(el.w, el.h) / 2);
                             const cmd = el.type.startsWith('draw') ? 'drawCircle' : 'fillCircle';
                             code += `  tft.${cmd}(${cx}, ${cy}, ${r}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'fillRoundRect':
                         case 'drawRoundRect': {
-                            const r = Math.round(Math.min(el.w, el.h) / 4);
+                            const r = el.wBind ? `Math.min(${ew}, ${eh}) / 4` : Math.round(Math.min(el.w, el.h) / 4);
                             const cmd = el.type.startsWith('draw') ? 'drawRoundRect' : 'fillRoundRect';
-                            code += `  tft.${cmd}(${el.x}, ${el.y}, ${el.w}, ${el.h}, ${r}, ${color}); ${nameComment}\n`;
+                            code += `  tft.${cmd}(${ex}, ${ey}, ${ew}, ${eh}, ${r}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'fillTriangle':
                         case 'drawTriangle': {
                             // Isosceles triangle inside bounding box
-                            const x0 = Math.round(el.x + el.w / 2), y0 = el.y;
-                            const x1 = el.x, y1 = el.y + el.h;
-                            const x2 = el.x + el.w, y2 = el.y + el.h;
+                            const x0 = el.xBind ? `${ex} + (${ew}/2)` : Math.round(el.x + el.w / 2);
+                            const y0 = ey;
+                            const x1 = ex, y1 = el.yBind ? `${ey} + ${eh}` : el.y + el.h;
+                            const x2 = el.xBind ? `${ex} + ${ew}` : el.x + el.w;
+                            const y2 = el.yBind ? `${ey} + ${eh}` : el.y + el.h;
                             const cmd = el.type.startsWith('draw') ? 'drawTriangle' : 'fillTriangle';
                             code += `  tft.${cmd}(${x0}, ${y0}, ${x1}, ${y1}, ${x2}, ${y2}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'fillEllipse':
                         case 'drawEllipse': {
-                            const cx = Math.round(el.x + el.w / 2);
-                            const cy = Math.round(el.y + el.h / 2);
-                            const rx = Math.round(el.w / 2);
-                            const ry = Math.round(el.h / 2);
+                            const cx = el.xBind ? `${ex} + (${ew}/2)` : Math.round(el.x + el.w / 2);
+                            const cy = el.yBind ? `${ey} + (${eh}/2)` : Math.round(el.y + el.h / 2);
+                            const rx = el.wBind ? `(${ew}/2)` : Math.round(el.w / 2);
+                            const ry = el.hBind ? `(${eh}/2)` : Math.round(el.h / 2);
                             const cmd = el.type.startsWith('draw') ? 'drawEllipse' : 'fillEllipse';
                             code += `  tft.${cmd}(${cx}, ${cy}, ${rx}, ${ry}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawLine': {
-                            const x1 = el.x + el.w;
-                            const y1 = el.y + el.h;
-                            code += `  tft.drawLine(${el.x}, ${el.y}, ${x1}, ${y1}, ${color}); ${nameComment}\n`;
+                            const x1 = el.xBind ? `${ex} + ${ew}` : el.x + el.w;
+                            const y1 = el.yBind ? `${ey} + ${eh}` : el.y + el.h;
+                            code += `  tft.drawLine(${ex}, ${ey}, ${x1}, ${y1}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawFastHLine': {
-                            code += `  tft.drawFastHLine(${el.x}, ${el.y}, ${el.w}, ${color}); ${nameComment}\n`;
+                            code += `  tft.drawFastHLine(${ex}, ${ey}, ${ew}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawFastVLine': {
-                            code += `  tft.drawFastVLine(${el.x}, ${el.y}, ${el.h}, ${color}); ${nameComment}\n`;
+                            code += `  tft.drawFastVLine(${ex}, ${ey}, ${eh}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawPixel': {
-                            code += `  tft.drawPixel(${el.x}, ${el.y}, ${color}); ${nameComment}\n`;
+                            code += `  tft.drawPixel(${ex}, ${ey}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawString':
                         case 'drawCentreString': {
-                            // Use Name as text content
-                            const text = el.name.replace(/"/g, '\\"'); // escape quotes
+                            // Use ValueBind if present, otherwise element Name
+                            const text = el.valueBind ? `String(${el.valueBind}).c_str()` : `"${el.name.replace(/"/g, '\\"')}"`;
+                            const isVariable = !!el.valueBind;
+
                             // Size heuristic: assume height 8px = size 1
-                            const size = Math.max(1, Math.round(el.h / 8));
+                            const size = el.hBind ? `Math.max(1, (int)(${eh} / 8))` : Math.max(1, Math.round(el.h / 8));
                             code += `  tft.setTextColor(${color}); tft.setTextSize(${size});\n`;
                             if (el.type === 'drawCentreString') {
-                                const cx = Math.round(el.x + el.w / 2);
-                                code += `  tft.drawCentreString("${text}", ${cx}, ${el.y}, 2); ${nameComment}\n`;
+                                const cx = el.xBind ? `${ex} + (${ew}/2)` : Math.round(el.x + el.w / 2);
+                                code += `  tft.drawCentreString(${text}, ${cx}, ${ey}, 2); ${nameComment}\n`;
                             } else {
-                                code += `  tft.drawString("${text}", ${el.x}, ${el.y}); ${nameComment}\n`;
+                                code += `  tft.drawString(${text}, ${ex}, ${ey}); ${nameComment}\n`;
                             }
                             break;
                         }
                         case 'drawRect': {
-                            code += `  tft.drawRect(${el.x}, ${el.y}, ${el.w}, ${el.h}, ${color}); ${nameComment}\n`;
+                            code += `  tft.drawRect(${ex}, ${ey}, ${ew}, ${eh}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'fillRect':
                         default: {
-                            code += `  tft.fillRect(${el.x}, ${el.y}, ${el.w}, ${el.h}, ${color}); ${nameComment}\n`;
+                            code += `  tft.fillRect(${ex}, ${ey}, ${ew}, ${eh}, ${color}); ${nameComment}\n`;
                             break;
                         }
                     }
@@ -710,9 +792,7 @@ class PrototypeView {
         }
 
         // Only update if changed (prevents cursor jumping if exact same)
-        if (this.dom.codePreview.value !== code) {
-            this.dom.codePreview.value = code;
-        }
+        this.updateCodeValue(code);
     }
 
     hexTo565(hex) {
@@ -1204,10 +1284,48 @@ class PrototypeView {
             <div class="inspector-group" style="margin-top:12px;">
                 <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">POSIÇÃO & TAMANHO</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                    <div class="input-field compact"><span>X</span><input type="number" data-prop="x" value="${el.x ?? 10}"></div>
-                    <div class="input-field compact"><span>Y</span><input type="number" data-prop="y" value="${el.y ?? 10}"></div>
-                    <div class="input-field compact"><span>W</span><input type="number" data-prop="w" value="${el.w ?? 50}"></div>
-                    <div class="input-field compact"><span>H</span><input type="number" data-prop="h" value="${el.h ?? 50}"></div>
+                    <div class="input-field compact">
+                        <span>X</span>
+                        <div style="display:flex;gap:4px;">
+                            <input type="number" data-prop="x" value="${el.x ?? 10}" style="flex:1;">
+                            <input type="text" data-prop="xBind" value="${el.xBind || ''}" placeholder="🔗 var" title="Vínculo C++" class="binding-input" style="width:60px;">
+                        </div>
+                    </div>
+                    <div class="input-field compact">
+                        <span>Y</span>
+                        <div style="display:flex;gap:4px;">
+                            <input type="number" data-prop="y" value="${el.y ?? 10}" style="flex:1;">
+                            <input type="text" data-prop="yBind" value="${el.yBind || ''}" placeholder="🔗 var" title="Vínculo C++" class="binding-input" style="width:60px;">
+                        </div>
+                    </div>
+                    <div class="input-field compact">
+                        <span>W</span>
+                        <div style="display:flex;gap:4px;">
+                            <input type="number" data-prop="w" value="${el.w ?? 50}" style="flex:1;">
+                            <input type="text" data-prop="wBind" value="${el.wBind || ''}" placeholder="🔗 var" title="Vínculo C++" class="binding-input" style="width:60px;">
+                        </div>
+                    </div>
+                    <div class="input-field compact">
+                        <span>H</span>
+                        <div style="display:flex;gap:4px;">
+                            <input type="number" data-prop="h" value="${el.h ?? 50}" style="flex:1;">
+                            <input type="text" data-prop="hBind" value="${el.hBind || ''}" placeholder="🔗 var" title="Vínculo C++" class="binding-input" style="width:60px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inspector-group" style="margin-top:12px;">
+                <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">LÓGICA DINÂMICA</div>
+                <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;">
+                    <div class="input-field compact">
+                        <span>Vínculo Cor</span>
+                        <input type="text" data-prop="colorBind" value="${el.colorBind || ''}" placeholder="🔗 var_cor" class="binding-input">
+                    </div>
+                    <div class="input-field compact">
+                        <span>Vínculo Valor</span>
+                        <input type="text" data-prop="valueBind" value="${el.valueBind || ''}" placeholder="🔗 var_valor" class="binding-input">
+                    </div>
                 </div>
             </div>
 

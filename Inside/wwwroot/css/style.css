@@ -625,6 +625,41 @@ button svg {
     transform: scale(1.05);
 }
 
+/* AI Architect Button Styling */
+.ai-layout-btn {
+    background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3) !important;
+}
+
+.ai-layout-btn:hover {
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4) !important;
+    transform: translateY(-2px) scale(1.02);
+}
+
+/* Binding inputs */
+.binding-input {
+    background: rgba(99, 102, 241, 0.1) !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    color: #a5b4fc !important;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem !important;
+    padding: 4px 6px !important;
+    transition: all 0.2s;
+}
+
+.binding-input:focus {
+    background: rgba(99, 102, 241, 0.2) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+
+.binding-input::placeholder {
+    color: rgba(165, 180, 252, 0.4);
+}
+
 /* Editor Area */
 .editor-area {
     background-color: #020617;
@@ -793,15 +828,18 @@ button svg {
 }
 
 .layer-item {
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    gap: 8px;
     display: flex;
     align-items: center;
     padding: 8px;
-    border-radius: 6px;
-    margin-bottom: 2px;
+    border-radius: 8px;
+    margin-bottom: 4px;
     cursor: pointer;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid transparent;
-    transition: all 0.2s;
+    border-left: 3px solid transparent;
 }
 
 .layer-item.dragging {
@@ -882,20 +920,7 @@ button svg {
     background: rgba(56, 189, 248, 0.1);
 }
 
-.layer-item {
-    font-size: 0.8rem;
-    transition: all 0.2s ease;
-    gap: 6px;
-    display: flex;
-    align-items: center;
-    padding: 8px;
-    border-radius: 6px;
-    margin-bottom: 2px;
-}
-
-.layer-item {
-    border-left: 3px solid transparent;
-}
+/* Cleaned up duplicate layer-item rules */
 
 .layer-item:hover {
     background: rgba(255, 255, 255, 0.08);

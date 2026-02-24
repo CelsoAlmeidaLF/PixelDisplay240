@@ -59,9 +59,17 @@
         <div class="tool-group">
              <label>Exportar</label>
              <button id="btn-import-design" class="tool-btn" title="Baixar Design (.h / .jpg)"
-                     style="width:100%; background:linear-gradient(135deg,#4ade80,#22d3ee);color:#000;font-weight:700;display:flex;justify-content:center;gap:6px;">
+                     style="width:100%; background:linear-gradient(135deg,#4ade80,#22d3ee); color:#000; font-weight:700;">
                  <i data-lucide="download-cloud"></i> Baixar Design
              </button>
+        </div>
+        
+        <!-- INTELIGÊNCIA ARTIFICIAL -->
+        <div class="tool-group">
+            <label>I.A. Architect</label>
+            <button id="btn-auto-layout" class="primary-btn tool-btn ai-layout-btn" title="Auto-Layout com IA">
+                <i data-lucide="sparkles"></i> Auto-Layout ✨
+            </button>
         </div>
 
         <!-- TELAS DO PROJETO -->
@@ -109,8 +117,9 @@
                 </button>
             </div>
         </div>
-        <div class="code-editor-main">
-            <textarea id="proto-code-preview" spellcheck="false"></textarea>
+        <div class="code-editor-main" style="position: relative; overflow: hidden;">
+            <div id="proto-code-preview-monaco" style="width: 100%; height: 100%;"></div>
+            <textarea id="proto-code-preview" style="display:none;"></textarea>
         </div>
     </section>
 
@@ -129,9 +138,9 @@
         </div>
 
         <!-- PROPERTIES -->
-        <div class="tool-group inspector-group" style="flex-shrink:0;">
+        <div class="tool-group inspector-group" style="flex:1; display:flex; flex-direction:column; min-height:0;">
             <label>Propriedades</label>
-            <div id="proto-interaction-panel" class="inspector-details" style="max-height:220px;overflow-y:auto;"></div>
+            <div id="proto-interaction-panel" class="inspector-details" style="flex:1;"></div>
         </div>
 
         <!-- SCREEN THUMBNAILS -->

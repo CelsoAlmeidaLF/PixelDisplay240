@@ -437,11 +437,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "H:\\FABRICA IA\\Display240\\v5\\Display240.csproj",
-      "projectName": "Display240",
-      "projectPath": "H:\\FABRICA IA\\Display240\\v5\\Display240.csproj",
+      "projectUniqueName": "H:\\FABRICA IA\\PixelDisplay240\\github\\PixelDisplay240-Inside\\Inside\\PixelDisplay240.csproj",
+      "projectName": "PixelDisplay240",
+      "projectPath": "H:\\FABRICA IA\\PixelDisplay240\\github\\PixelDisplay240-Inside\\Inside\\PixelDisplay240.csproj",
       "packagesPath": "C:\\Users\\celso\\.nuget\\packages\\",
-      "outputPath": "H:\\FABRICA IA\\Display240\\v5\\obj\\",
+      "outputPath": "H:\\FABRICA IA\\PixelDisplay240\\github\\PixelDisplay240-Inside\\Inside\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

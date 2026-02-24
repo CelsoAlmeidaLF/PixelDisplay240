@@ -39,6 +39,14 @@ namespace PixelDisplay240Api.Models
         public string Color { get; set; } = "#38bdf8";
         public string? Asset { get; set; }
         public string? TargetScreenId { get; set; }
+
+        // State Logic Bindings
+        public string? XBind { get; set; }
+        public string? YBind { get; set; }
+        public string? WBind { get; set; }
+        public string? HBind { get; set; }
+        public string? ColorBind { get; set; }
+        public string? ValueBind { get; set; }
     }
 
     public class PrototypeAsset
