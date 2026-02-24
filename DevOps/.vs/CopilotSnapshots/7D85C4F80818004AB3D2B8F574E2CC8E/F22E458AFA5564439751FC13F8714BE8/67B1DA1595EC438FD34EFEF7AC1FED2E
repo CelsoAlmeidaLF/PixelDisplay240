@@ -1,0 +1,145 @@
+﻿<div id="prototype-view" class="view-panel">
+    <!-- LEFT SIDEBAR -->
+    <aside class="left-proto-sidebar">
+
+        <!-- TFT COMMANDS TOOLBAR -->
+        <div class="tool-group" style="padding-bottom:4px;">
+            <label style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Elementos (TFT)</span>
+                <span style="font-size:0.55rem;color:var(--text-muted);font-weight:400;">clique para inserir</span>
+            </label>
+
+            <!-- FORMAS -->
+            <div style="font-size:0.55rem;color:var(--primary);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin:4px 0 3px;">Formas</div>
+            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillRect"      title="fillRect — Retângulo preenchido"><i data-lucide="square"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawRect"      title="drawRect — Contorno"><i data-lucide="square-dashed"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillRoundRect" title="fillRoundRect — Arredondado"><i data-lucide="square-rounded-top"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillCircle"    title="fillCircle — Círculo"><i data-lucide="circle"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawCircle"    title="drawCircle — Contorno círculo"><i data-lucide="circle-dashed"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillTriangle"  title="fillTriangle — Triângulo"><i data-lucide="triangle"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillEllipse"   title="fillEllipse — Elipse"><i data-lucide="ellipsis"></i></button>
+            </div>
+
+            <!-- LINHAS -->
+            <div style="font-size:0.55rem;color:var(--primary);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin:4px 0 3px;">Linhas</div>
+            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawLine"      title="drawLine — Linha diagonal"><i data-lucide="minus"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawFastHLine" title="drawFastHLine — Linha horizontal"><i data-lucide="move-horizontal"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawFastVLine" title="drawFastVLine — Linha vertical"><i data-lucide="move-vertical"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawPixel"     title="drawPixel — Pixel"><i data-lucide="dot"></i></button>
+            </div>
+
+            <!-- TEXTO -->
+            <div style="font-size:0.55rem;color:var(--primary);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin:4px 0 3px;">Texto</div>
+            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawString"       title="drawString — Texto simples"><i data-lucide="type"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawCentreString" title="drawCentreString — Texto centralizado"><i data-lucide="align-center"></i></button>
+            </div>
+
+            <!-- TELA -->
+            <div style="font-size:0.55rem;color:var(--primary);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin:4px 0 3px;">Tela</div>
+            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillScreen" title="fillScreen — Fundo sólido"><i data-lucide="panel-top"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="pushImage"  title="pushImage — Imagem PROGMEM"><i data-lucide="image"></i></button>
+            </div>
+        </div>
+
+        <!-- IMPORTAR IMAGEM (.jpg/.bmp) -->
+        <div class="tool-group">
+            <label>Importar Imagem</label>
+            <button id="btn-upload-image" class="secondary-btn small-btn" style="width:100%;">
+                <i data-lucide="image"></i> JPG / BMP / PNG
+            </button>
+            <input type="file" id="proto-image-upload" accept="image/jpeg,image/bmp,image/png,.bmp" style="display:none;">
+        </div>
+
+        <!-- IMPORTAR ARRAY .h -->
+        <div class="tool-group">
+            <label>Importar Array C (.h)</label>
+            <button id="btn-upload-h" class="secondary-btn small-btn" style="width:100%;border-color:rgba(129,140,248,0.4);">
+                <i data-lucide="file-code"></i> Importar .h
+            </button>
+            <input type="file" id="proto-h-upload" accept=".h" style="display:none;">
+            <div id="h-import-info" style="font-size:0.6rem;color:var(--text-muted);margin-top:4px;display:none;"></div>
+        </div>
+
+        <!-- TELAS DO PROJETO -->
+        <div class="tool-group">
+            <label>Telas</label>
+            <div id="screen-list" class="proto-screen-list"></div>
+            <button id="btn-add-screen" class="secondary-btn small-btn" style="width:100%;margin-top:8px;">
+                <i data-lucide="plus"></i> Nova Tela
+            </button>
+        </div>
+
+        <!-- ELEMENTOS DA TELA ATIVA -->
+        <div class="tool-group" style="flex:1;">
+            <label>Elementos</label>
+            <div id="proto-element-list" class="layers-list" style="max-height:120px;overflow-y:auto;"></div>
+        </div>
+
+    </aside>
+
+
+    <!-- CENTER: CODE EDITOR -->
+    <section class="proto-code-area">
+        <div class="proto-workspace-header">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="status-badge" style="background:#4ade80;">C++ CODE</div>
+                <h2 style="color:#4ade80;font-family:'JetBrains Mono',monospace;">pixelstream_v5.ino</h2>
+            </div>
+            <div class="workspace-actions" style="display:flex;gap:8px;">
+                <button class="primary-btn small-btn" onclick="
+                    const code = document.getElementById('proto-code-preview').value;
+                    navigator.clipboard.writeText(code);
+                    if(app?.toast) app.toast.show('success','Código Copiado','');">
+                    <i data-lucide="copy"></i> Copiar
+                </button>
+                <button id="btn-save-code-stage" class="secondary-btn small-btn" style="border-color:rgba(74,222,128,0.3);">
+                    <i data-lucide="save"></i> Salvar no Stage
+                </button>
+            </div>
+        </div>
+        <div class="code-editor-main">
+            <textarea id="proto-code-preview" spellcheck="false"></textarea>
+        </div>
+        <div class="proto-bottom-files">
+            <div class="group-header" style="padding:0.5rem 1rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                <label style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;">Stage Files</label>
+                <button id="btn-refresh-stage" class="text-btn small-btn">
+                    <i data-lucide="refresh-cw" style="width:14px;"></i>
+                </button>
+            </div>
+            <div id="stage-file-list" class="layers-list" style="max-height:120px;overflow-y:auto;padding:0.5rem;"></div>
+        </div>
+    </section>
+
+    <!-- RIGHT SIDEBAR: DISPLAY PREVIEW + PROPERTIES -->
+    <aside class="right-proto-sidebar">
+
+        <!-- DISPLAY PREVIEW - sempre fixo no topo -->
+        <div class="proto-workspace-box">
+            <div class="inspector-label" style="padding:0.5rem;background:rgba(0,0,0,0.2);font-size:0.6rem;color:var(--primary);font-weight:800;display:flex;justify-content:space-between;">
+                <span>DISPLAY 240×240</span>
+                <span id="active-screen-title">Screen 1</span>
+            </div>
+            <div class="canvas-mount-small">
+                <canvas id="proto-canvas" width="240" height="240"></canvas>
+            </div>
+        </div>
+
+        <!-- PROPERTIES -->
+        <div class="tool-group inspector-group" style="flex-shrink:0;">
+            <label>Propriedades</label>
+            <div id="proto-interaction-panel" class="inspector-details" style="max-height:220px;overflow-y:auto;"></div>
+        </div>
+
+        <!-- SCREEN THUMBNAILS -->
+        <div class="proto-gallery-vertical">
+            <label>Telas</label>
+            <div id="proto-main-container" class="preview-vertical-list"></div>
+        </div>
+
+    </aside>
+</div>

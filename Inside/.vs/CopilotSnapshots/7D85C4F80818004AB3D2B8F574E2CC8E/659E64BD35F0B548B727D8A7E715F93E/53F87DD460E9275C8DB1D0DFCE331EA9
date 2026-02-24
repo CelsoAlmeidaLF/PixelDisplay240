@@ -1,0 +1,84 @@
+﻿using System.Text.Json;
+using Microsoft.Extensions.FileProviders;
+using Display240Api.Models;
+using Display240Api.Services;
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = Directory.GetCurrentDirectory(),
+    WebRootPath = "wwwroot"
+});
+
+// Register services
+builder.Services.AddSingleton<AgentConfigService>();
+builder.Services.AddHttpClient<GeminiService>();
+
+var app = builder.Build();
+
+var contentRoot = app.Environment.ContentRootPath;
+var staticProvider = new PhysicalFileProvider(contentRoot);
+
+app.UseDefaultFiles(new DefaultFilesOptions
+{
+    FileProvider = staticProvider,
+    DefaultFileNames = new List<string> { "index.html" }
+});
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = staticProvider
+});
+
+var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+app.MapGet("/api/agents", (AgentConfigService configService) =>
+{
+    var data = configService.LoadConfig();
+    return Results.Json(data, jsonOptions);
+});
+
+app.MapPost("/api/agents", async (HttpRequest request, AgentConfigService configService) =>
+{
+    var data = await request.ReadFromJsonAsync<AgentConfig>(jsonOptions);
+    if (data == null)
+    {
+        return Results.BadRequest(new { message = "Invalid payload" });
+    }
+
+    data.Gemini.ApiKey = (data.Gemini.ApiKey ?? string.Empty).Trim();
+    configService.SaveConfig(data);
+    
+    return Results.Ok(new { ok = true });
+});
+
+app.MapGet("/api/ai/image", async (string prompt, int width, int height, int? seed, AgentConfigService configService, GeminiService geminiService) =>
+{
+    if (string.IsNullOrWhiteSpace(prompt))
+    {
+        return Results.BadRequest(new { message = "Prompt required" });
+    }
+
+    var config = configService.LoadConfig();
+    var apiKey = config.Gemini.ApiKey?.Trim() ?? string.Empty;
+    if (string.IsNullOrWhiteSpace(apiKey))
+    {
+        return Results.BadRequest(new { message = "Gemini API key not configured" });
+    }
+
+    var (success, bytes, error) = await geminiService.GenerateImageAsync(apiKey, prompt);
+
+    if (!success)
+    {
+        Console.WriteLine($"[AI] Gemini error: {error}");
+        return Results.Json(new
+        {
+            message = "Gemini error",
+            body = error
+        }, statusCode: StatusCodes.Status502BadGateway);
+    }
+
+    return Results.File(bytes!, "image/png");
+});
+
+app.Run();

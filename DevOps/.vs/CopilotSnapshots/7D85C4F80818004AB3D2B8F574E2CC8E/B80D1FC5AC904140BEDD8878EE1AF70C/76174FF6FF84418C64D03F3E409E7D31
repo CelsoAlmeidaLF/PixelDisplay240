@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - PixelStream IDE</title>
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="theme-default">
+    <!-- Traditional Loading Screen -->
+    <div id="app-loading-overlay">
+        <div class="loader-spinner"></div>
+        <h2>PixelStream IDE</h2>
+        <p id="loading-status">Inicializando sistema de versão...</p>
+        <div id="version-check-log" style="font-size: 0.6rem; color: #64748b; margin-top: 10px; max-height: 100px; overflow-y: auto; text-align: left; width: 200px;"></div>
+    </div>
+
+    <div class="app-container app-fade-init">
+        @RenderBody()
+    </div>
+
+    <script>
+        // --- SYSTEM VERSION CONTROL ---
+        window.PixelStreamSystem = {
+            version: '5.1.0', // Global expected version
+            modules: {},
+            expectedModules: ['model', 'stage', 'tft', 'view', 'controller', 'designer', 'main'],
+            
+            register: function(name, version) {
+                console.log(`[System] Module loaded: ${name} v${version}`);
+                this.modules[name] = version;
+                
+                const log = document.getElementById('version-check-log');
+                if(log) {
+                    const status = (version === this.version) ? '<span style="color:#4ade80">OK</span>' : '<span style="color:#facc15">WARN</span>';
+                    log.innerHTML += `<div>${name}: v${version} [${status}]</div>`;
+                }
+                
+                // Update loading status
+                if(window.markLoaded) window.markLoaded(name + '.js');
+            },
+
+            checkintegrity: function() {
+                const missing = this.expectedModules.filter(m => !this.modules[m]);
+                if (missing.length > 0) {
+                    console.error('[System] Missing modules:', missing);
+                    return false;
+                }
+                return true;
+            }
+        };
+    </script>
+
+    <!-- Scripts with Version Registration -->
+    <script src="~/js/prototype/model.js?v=@DateTime.Now.Ticks" onerror="markError('model.js')"></script>
+    <script src="~/js/prototype/stage-manager.js?v=@DateTime.Now.Ticks" onerror="markError('stage-manager.js')"></script>
+    <script src="~/js/prototype/tft-commands.js?v=@DateTime.Now.Ticks" onerror="markError('tft-commands.js')"></script>
+    <script src="~/js/prototype/view.js?v=@DateTime.Now.Ticks" onerror="markError('view.js')"></script>
+    <script src="~/js/prototype/controller.js?v=@DateTime.Now.Ticks" onerror="markError('controller.js')"></script>
+    
+    <script src="~/js/designer.js?v=@DateTime.Now.Ticks" onerror="markError('designer.js')"></script>
+    <script src="~/js/script.js?v=@DateTime.Now.Ticks" onerror="markError('script.js')"></script>
+
+    <script>
+        const requiredScripts = ['model.js', 'stage-manager.js', 'tft-commands.js', 'view.js', 'controller.js', 'designer.js', 'script.js'];
+        const loadedScripts = new Set();
+        const statusEl = document.getElementById('loading-status');
+        const overlay = document.getElementById('app-loading-overlay');
+        const container = document.querySelector('.app-container');
+
+        // Hook into existing markLoaded or define new one
+        window.markLoaded = function(scriptName) {
+            loadedScripts.add(scriptName);
+            if (statusEl) statusEl.textContent = `Carregando ncleo... (${loadedScripts.size}/${requiredScripts.length})`;
+            checkAllLoaded();
+        }
+
+        function markError(scriptName) {
+            if (statusEl) {
+                statusEl.innerHTML = `<span style="color:#ef4444">FALHA FATAL: ${scriptName}</span><br>Arquivo no encontrado ou corrompido.`;
+                statusEl.style.opacity = 1;
+            }
+            console.error('Failed to load resource:', scriptName);
+        }
+
+        function checkAllLoaded() {
+            if (loadedScripts.size === requiredScripts.length) {
+                // Final Integrity Check
+                if (!window.PixelStreamSystem.checkintegrity()) {
+                    if (statusEl) statusEl.innerHTML = `<span style="color:#facc15">Alerta de Integridade</span><br>Alguns mdulos no se registraram.`;
+                    return; // Don't hide overlay if integrity fails
+                }
+
+                if (statusEl) statusEl.textContent = 'Inicializando Interface...';
+                
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    overlay.style.pointerEvents = 'none';
+                    container.style.opacity = '1';
+                    setTimeout(() => overlay.remove(), 500);
+                }, 800);
+            }
+        }
+        
+        setTimeout(() => {
+            if (loadedScripts.size !== requiredScripts.length) {
+                const missing = requiredScripts.filter(s => !loadedScripts.has(s));
+                if(statusEl) statusEl.innerHTML = `Tempo esgotado.<br>Travado em: ${missing.join(', ')}`;
+            }
+        }, 8000);
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

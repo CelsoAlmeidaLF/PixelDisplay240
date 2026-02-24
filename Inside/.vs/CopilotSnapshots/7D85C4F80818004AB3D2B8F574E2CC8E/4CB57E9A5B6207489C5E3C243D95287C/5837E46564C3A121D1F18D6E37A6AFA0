@@ -1,0 +1,26 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - PixelStream IDE</title>
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="theme-default">
+    <div class="app-container">
+        @RenderBody()
+    </div>
+
+    <script src="~/js/prototype/model.js" asp-append-version="true"></script>
+    <script src="~/js/prototype/stage-manager.js" asp-append-version="true"></script>
+    <script src="~/js/prototype/tft-commands.js" asp-append-version="true"></script>
+    <script src="~/js/prototype/view.js" asp-append-version="true"></script>
+    <script src="~/js/prototype/controller.js" asp-append-version="true"></script>
+    
+    <script src="~/js/designer.js" asp-append-version="true"></script>
+    <script src="~/js/script.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

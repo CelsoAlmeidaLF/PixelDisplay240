@@ -1,0 +1,185 @@
+﻿/**
+ * ProtoStageManager - Manages Stage file operations for the Prototype view.
+ *
+ * Responsibilities:
+ *  - Save images (PNG/JPG/BMP) to Stage
+ *  - Save C array .h files to Stage
+ *  - Save generated .cpp code to Stage
+ *  - Load Stage file list and let user pick files
+ *  - Parse .h RGB565 uint16_t arrays → render on canvas
+ */
+class ProtoStageManager {
+    constructor(apiClient) {
+        this.api = apiClient;
+        this.stageFiles = [];
+    }
+
+    // ─── API Calls ─────────────────────────────────────────────────────────────
+
+    async listFiles() {
+        try {
+            const resp = await this.api.request('/api/stage');
+            this.stageFiles = await resp.json();
+            return this.stageFiles;
+        } catch (e) {
+            console.error('Stage list error:', e);
+            return [];
+        }
+    }
+
+    /**
+     * Save any content to Stage.
+     * @param {string} filename - e.g. "screen1_bg.h", "screen1.cpp", "image.png"
+     * @param {string} base64Content - base64 or dataURL string
+     */
+    async saveToStage(filename, base64Content) {
+        try {
+            await this.api.request('/api/stage/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, content: base64Content })
+            });
+            console.log(`[Stage] Saved: ${filename}`);
+            return true;
+        } catch (e) {
+            console.error('[Stage] Save error:', e);
+            return false;
+        }
+    }
+
+    /**
+     * Save PNG image dataURL to Stage.
+     */
+    async saveImage(name, dataUrl) {
+        const safeName = name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+        const filename = safeName.endsWith('.png') || safeName.endsWith('.jpg') ? safeName : safeName + '.png';
+        return this.saveToStage(filename, dataUrl);
+    }
+
+    /**
+     * Save a .h C array to Stage.
+     */
+    async saveHFile(name, content) {
+        const safeName = name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+        const filename = safeName.endsWith('.h') ? safeName : safeName + '.h';
+        // Encode text as base64
+        const b64 = btoa(unescape(encodeURIComponent(content)));
+        return this.saveToStage(filename, b64);
+    }
+
+    /**
+     * Save C++ code to Stage.
+     */
+    async saveCppFile(screenName, cppCode) {
+        const safeName = screenName.replace(/[^a-zA-Z0-9_]/g, '_');
+        const filename = `${safeName}.cpp`;
+        const b64 = btoa(unescape(encodeURIComponent(cppCode)));
+        return this.saveToStage(filename, b64);
+    }
+
+    // ─── .h File Parser ────────────────────────────────────────────────────────
+
+    /**
+     * Parse a C header file containing a uint16_t RGB565 array.
+     * Returns { name, width, height, pixels: Uint16Array }
+     */
+    parseHFile(content) {
+        // Try to extract array name: const uint16_t IMAGE_NAME[]
+        const nameMatch = content.match(/(?:const\s+)?uint16_t\s+(\w+)\s*\[/);
+        const name = nameMatch ? nameMatch[1] : 'image';
+
+        // Try to extract dimensions from comments: // 240x240 or #define WIDTH 240
+        let width = 240, height = 240;
+        const dimComment = content.match(/\/\/.*?(\d+)\s*[xX]\s*(\d+)/);
+        if (dimComment) { width = parseInt(dimComment[1]); height = parseInt(dimComment[2]); }
+
+        const wDefine = content.match(/#define\s+\w*WIDTH\w*\s+(\d+)/i);
+        const hDefine = content.match(/#define\s+\w*HEIGHT\w*\s+(\d+)/i);
+        if (wDefine) width = parseInt(wDefine[1]);
+        if (hDefine) height = parseInt(hDefine[1]);
+
+        // Extract the hex values: 0xRRGG, 0xBBBB...
+        const hexMatches = content.match(/0[xX][0-9A-Fa-f]{4}/g);
+        if (!hexMatches) return null;
+
+        const pixels = new Uint16Array(hexMatches.map(h => parseInt(h, 16)));
+        return { name, width, height, pixels };
+    }
+
+    /**
+     * Convert a parsed .h array to a canvas ImageData.
+     * RGB565 → RGBA8888
+     */
+    hArrayToImageData(parsed) {
+        const { width, height, pixels } = parsed;
+        const imageData = new ImageData(width, height);
+        const data = imageData.data;
+
+        for (let i = 0; i < pixels.length && i < width * height; i++) {
+            const p = pixels[i];
+            const r = ((p >> 11) & 0x1F) * 8;
+            const g = ((p >> 5) & 0x3F) * 4;
+            const b = (p & 0x1F) * 8;
+            data[i * 4] = r;
+            data[i * 4 + 1] = g;
+            data[i * 4 + 2] = b;
+            data[i * 4 + 3] = 255;
+        }
+        return imageData;
+    }
+
+    /**
+     * Render a parsed .h array onto a canvas.
+     * Returns a dataURL of the rendered image.
+     */
+    hArrayToDataUrl(parsed) {
+        const offscreen = document.createElement('canvas');
+        offscreen.width = parsed.width;
+        offscreen.height = parsed.height;
+        const ctx = offscreen.getContext('2d');
+        ctx.putImageData(this.hArrayToImageData(parsed), 0, 0);
+        return offscreen.toDataURL('image/png');
+    }
+
+    // ─── Stage File List UI ────────────────────────────────────────────────────
+
+    /**
+     * Render the Stage file list into a container element.
+     * @param {HTMLElement} container
+     * @param {Function} onSelect - called with { name, url } when user picks a file
+     */
+    async renderFileList(container) {
+        if (!container) return;
+        container.innerHTML = '<div style="color:var(--text-muted);font-size:0.7rem;padding:8px;">Carregando...</div>';
+        const files = await this.listFiles();
+
+        if (!files.length) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:0.7rem;padding:8px;">Stage vazio</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        files.forEach(f => {
+            const ext = f.name.split('.').pop().toLowerCase();
+            const icon = ext === 'h' ? 'file-code' : ext === 'cpp' ? 'file-code-2' : 'image';
+            const item = document.createElement('div');
+            item.className = 'layer-item';
+            item.style.cssText = 'cursor: pointer; padding: 6px 8px;';
+            item.innerHTML = `
+                <i data-lucide="${icon}" style="width:12px;flex-shrink:0;"></i>
+                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.7rem;">${f.name}</span>
+                <span style="font-size:0.55rem;color:var(--text-muted);">${this._formatSize(f.size)}</span>
+            `;
+            item.onclick = () => this.onFileSelect?.(f);
+            container.appendChild(item);
+        });
+
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    _formatSize(bytes) {
+        if (bytes < 1024) return bytes + 'B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+        return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+    }
+}

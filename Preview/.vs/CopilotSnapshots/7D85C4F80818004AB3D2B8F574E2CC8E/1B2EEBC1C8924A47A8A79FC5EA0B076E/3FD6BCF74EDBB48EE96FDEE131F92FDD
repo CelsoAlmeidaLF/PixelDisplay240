@@ -1,0 +1,315 @@
+﻿/**
+ * Prototype Controller - Orchestrates Model, View, and C# Backend
+ */
+class PrototypeController {
+    constructor(model, view) {
+        this.model = model;
+        this.view = view;
+        this.app = null; // Will be set by script.js
+
+        this.draggingElement = null;
+        this.dragOffset = { x: 0, y: 0 };
+
+        this.resizingElement = null;
+
+        this.setupViewCallbacks();
+    }
+
+    // Called after app is set
+    async init(app) {
+        this.app = app;
+        // Give the view access to the api so Stage features work
+        if (app.api) this.view.setApiClient(app.api);
+        await this.sync();
+    }
+
+    async sync() {
+        if (!this.app || !this.app.api) return;
+        try {
+            const resp = await this.app.api.request('/api/prototype');
+            const data = await resp.json();
+            this.model.updateFromData(data);
+            this.view.render(this.model);
+        } catch (err) {
+            console.error('Sync failed:', err);
+        }
+    }
+
+    async callApi(path, method = 'POST', body = null) {
+        if (!this.app || !this.app.api) return;
+        try {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (body) options.body = JSON.stringify(body);
+
+            const resp = await this.app.api.request(`/api/prototype${path}`, options);
+            const data = await resp.json();
+            this.model.updateFromData(data);
+            this.view.render(this.model);
+            return data;
+        } catch (err) {
+            console.error(`API Call failed (${path}):`, err);
+        }
+    }
+
+    setupViewCallbacks() {
+        this.view.onAddScreen = () => this.callApi('/screen');
+        this.view.onSelectScreen = (id) => this.callApi('/screen/select', 'POST', { id });
+        this.view.onDeleteScreen = (id) => this.callApi(`/screen/${id}`, 'DELETE');
+
+        this.view.onAddElement = (type, asset = null) => this.callApi('/element', 'POST', {
+            screenId: this.model.activeScreenId,
+            type,
+            asset
+        });
+
+        this.view.onSelectElement = (id) => this.callApi('/element/select', 'POST', { id });
+        this.view.onElementDelete = (id) => this.callApi(`/element/${this.model.activeScreenId}/${id}`, 'DELETE');
+
+        this.view.onPropertyChange = (elId, prop, val) => {
+            if (prop === 'background') {
+                this.callApi('/screen/background', 'POST', {
+                    screenId: this.model.activeScreenId,
+                    assetName: val,
+                    dataUrl: this.model.assets.find(a => a.name === val)?.dataUrl
+                });
+            } else {
+                this.callApi('/element/update', 'POST', {
+                    screenId: this.model.activeScreenId,
+                    elId,
+                    updates: { [prop]: val }
+                });
+            }
+        };
+
+        this.view.onAssetUpload = (asset) => this.callApi('/asset', 'POST', asset);
+        this.view.onDeleteAsset = (name) => this.callApi(`/asset/${name}`, 'DELETE');
+
+        // Import background from Designer or from disk/Stage
+        this.view.onImportBackground = async (dataUrl, sourceName) => {
+            const activeId = this.model.activeScreenId;
+            if (!activeId) return;
+            await this.callApi('/screen/background', 'POST', {
+                screenId: activeId,
+                assetName: null,
+                dataUrl: dataUrl
+            });
+            // Auto-save rendered code to Stage
+            const code = this.view.dom.codePreview?.value || '';
+            if (code && this.view.stage) {
+                await this.view.stage.saveCppFile(
+                    (this.model.activeScreen?.name || 'screen').replace(/\s+/g, '_'),
+                    code
+                );
+                await this.view._loadStageList();
+            }
+        };
+
+        this.view.onCanvasMouseDown = (e) => this.handleMouseDown(e);
+        this.view.onCanvasMouseMove = (e) => this.handleMouseMove(e);
+        this.view.onCanvasMouseUp = (e) => this.handleMouseUp(e);
+
+        // Code editor → model sync (fires 800ms after user stops typing)
+        this.view.onCodeChanged = (code) => this._syncCodeToModel(code);
+    }
+
+    /**
+     * Bidirectional sync: parse C++ code → update model elements.
+     * Rewritten to be non-destructive. It tries to match elements by type and order.
+     * New elements are created, existing ones updated.
+     * UNMATCHED elements in the code are assumed to be new and added.
+     * UNMATCHED elements in the model are NOT deleted to avoid accidental loss of unparseable items.
+     */
+    async _syncCodeToModel(code) {
+        const screen = this.model.activeScreen;
+        if (!screen) return;
+
+        const fnName = (screen.name || 'Screen')
+            .replace(/\s+/g, '_')
+            .replace(/[^a-zA-Z0-9_]/g, '');
+
+        const parsedElements = this.view._parseElementsFromCode(code, fnName);
+        if (!parsedElements || parsedElements.length === 0) return;
+
+        // Strategy: Match parsed elements to existing model elements by ID if possible?
+        // No, C++ code doesn't store IDs. We match by Type and closeness/order.
+        // Actually, let's use a simple index-based matching per type to update properties.
+        
+        // Group model elements by type
+        const modelGroups = {};
+        screen.elements.forEach(el => {
+            if (!modelGroups[el.type]) modelGroups[el.type] = [];
+            modelGroups[el.type].push(el);
+        });
+
+        // Group parsed elements by type
+        const parsedGroups = {};
+        parsedElements.forEach(p => {
+            if (!parsedGroups[p.type]) parsedGroups[p.type] = [];
+            parsedGroups[p.type].push(p);
+        });
+
+        // Loop through parsed groups and update or create
+        for (const type in parsedGroups) {
+            const parsedList = parsedGroups[type];
+            const modelList = modelGroups[type] || [];
+
+            for (let i = 0; i < parsedList.length; i++) {
+                const p = parsedList[i];
+                if (i < modelList.length) {
+                    // Update existing element
+                    const el = modelList[i];
+                    // Only update if changed prevents unnecessary API calls
+                    if (el.x !== p.x || el.y !== p.y || el.w !== p.w || el.h !== p.h || 
+                        this.view.hexTo565(el.color) !== this.view.hexTo565(p.color) || 
+                        (p.name && el.name !== p.name && !el.name.startsWith(p.type))) { // sloppy name check
+                        
+                        await this.callApi('/element/update', 'POST', {
+                            screenId: this.model.activeScreenId,
+                            elId: el.id,
+                            updates: { 
+                                x: p.x, y: p.y, w: p.w, h: p.h, 
+                                color: p.color,
+                                name: p.name || el.name 
+                            }
+                        });
+                    }
+                } else {
+                    // Create new element from code
+                    // First create it to get an ID
+                    await this.callApi('/element', 'POST', {
+                        screenId: this.model.activeScreenId,
+                        type: p.type
+                    });
+                    // Then update its properties immediately
+                    // (The new element is added to the end of the list)
+                    // We need to fetch the updated model to get the ID, but callApi does that.
+                    // The create call updated this.model.
+                    const newEl = this.model.activeScreen?.elements.slice(-1)[0];
+                    if (newEl) {
+                         await this.callApi('/element/update', 'POST', {
+                            screenId: this.model.activeScreenId,
+                            elId: newEl.id,
+                            updates: { 
+                                x: p.x, y: p.y, w: p.w, h: p.h, 
+                                color: p.color,
+                                name: p.name || p.type 
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Note: We deliberately DO NOT delete model elements that are missing in the code
+        // because our parser might be incomplete. This avoids "vanishing elements" bugs.
+        // Users can delete elements via the UI Inspector or delete button.
+    }
+
+    handleMouseDown(e) {
+        const rect = e.target.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const screen = this.model.activeScreen;
+        if (!screen) return;
+
+        // Check for resize handle on selected element first
+        if (this.model.selectedElementId) {
+            const el = screen.elements.find(e => e.id === this.model.selectedElementId);
+            if (el) {
+                // Bottom-right corner handle area (10x10)
+                if (x >= el.x + el.w - 10 && x <= el.x + el.w + 5 &&
+                    y >= el.y + el.h - 10 && y <= el.y + el.h + 5) {
+                    this.resizingElement = el;
+                    this.draggingElement = null; // Ensure we don't drag
+                    return;
+                }
+            }
+        }
+
+        this.draggingElement = null;
+        this.resizingElement = null;
+
+        // Find element under mouse for dragging
+        for (let i = screen.elements.length - 1; i >= 0; i--) {
+            const el = screen.elements[i];
+            if (x >= el.x && x <= el.x + el.w && y >= el.y && y <= el.y + el.h) {
+                this.draggingElement = el;
+                this.dragOffset = { x: x - el.x, y: y - el.y };
+                this.view.onSelectElement(el.id);
+                break;
+            }
+        }
+
+        if (!this.draggingElement && !this.resizingElement) {
+            this.view.onSelectElement(null);
+        }
+    }
+
+    handleMouseMove(e) {
+        if (!this.draggingElement && !this.resizingElement) return;
+
+        const rect = e.target.getBoundingClientRect();
+        
+        if (this.resizingElement) {
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            // Calculate new width/height, minimum 5px
+            const newW = Math.max(5, currentX - this.resizingElement.x);
+            const newH = Math.max(5, currentY - this.resizingElement.y);
+            
+            this.resizingElement.w = Math.round(newW);
+            this.resizingElement.h = Math.round(newH);
+            this.view.render(this.model);
+            return;
+        }
+
+        if (this.draggingElement) {
+            const x = Math.round(e.clientX - rect.left - this.dragOffset.x);
+            const y = Math.round(e.clientY - rect.top - this.dragOffset.y);
+
+            this.draggingElement.x = x;
+            this.draggingElement.y = y;
+            this.view.render(this.model);
+        }
+    }
+
+    async handleMouseUp(e) {
+        if (this.resizingElement) {
+            await this.callApi('/element/update', 'POST', {
+                screenId: this.model.activeScreenId,
+                elId: this.resizingElement.id,
+                updates: {
+                    w: this.resizingElement.w,
+                    h: this.resizingElement.h
+                }
+            });
+            this.resizingElement = null;
+            return;
+        }
+
+        if (this.draggingElement) {
+            await this.callApi('/element/move', 'POST', {
+                screenId: this.model.activeScreenId,
+                elId: this.draggingElement.id,
+                x: this.draggingElement.x,
+                y: this.draggingElement.y
+            });
+            this.draggingElement = null;
+        }
+    }
+
+    async importFromCollection(dataUrl) {
+        return this.callApi('/asset', 'POST', {
+            name: `Design_${Date.now()}`,
+            dataUrl: dataUrl,
+            kind: 'image'
+        });
+    }
+
+    refresh() { this.sync(); }
+}

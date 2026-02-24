@@ -1,0 +1,1137 @@
+﻿// --- PixelStream Studio IDE v5 ---
+// Advanced Embedded UI Design Suite - Clean OOP Implementation
+
+// Ensure EditorModule base class exists if designer.js hasn't run or defined it
+if (typeof EditorModule === 'undefined') {
+    window.EditorModule = class EditorModule {
+        constructor() {
+            this.dom = (id) => {
+                const el = document.getElementById(id);
+                if (!el && !['status-memory', 'status-time'].includes(id)) {
+                    // Silently return null for missing elements instead of throwing
+                }
+                return el;
+            };
+        }
+    };
+}
+
+// ========== 1. Theme & Palette Manager ==========
+class ThemeManager extends EditorModule {
+    constructor() {
+        super();
+        this.presets = {
+            gameboy: ['#0f380f', '#306230', '#8bac0f', '#9bbc0f'],
+            pico8: ['#000000', '#1D2B53', '#7E2553', '#008751', '#AB5236', '#5F574F', '#C2C3C7', '#FFF1E8', '#FF004D', '#FFA300', '#FFEC27', '#00E436', '#29ADFF', '#83769C', '#FF77A8', '#FFCCAA'],
+            nes: ['#7C7C7C', '#0000FC', '#0000BC', '#4428BC', '#940084', '#A80020', '#A81000', '#881400', '#503000', '#007800', '#006800', '#0058F8', '#004058', '#000000']
+        };
+        this.themes = {
+            default: { bg: '#0f172a', card: '#1e293b', primary: '#38bdf8', border: '#334155' },
+            dracula: { bg: '#282a36', card: '#44475a', primary: '#bd93f9', border: '#6272a4' },
+            nord: { bg: '#2e3440', card: '#3b4252', primary: '#88c0d0', border: '#4c566a' },
+            monokai: { bg: '#272822', card: '#3e3d32', primary: '#f92672', border: '#75715e' }
+        };
+        this._init();
+    }
+
+    _init() {
+        const paletteSel = this.dom('palette-presets');
+        if (paletteSel) paletteSel.onchange = () => this.loadPalette(paletteSel.value);
+
+        const btnSave = this.dom('btn-save-color');
+        if (btnSave) btnSave.onclick = () => this.addColor(this.dom('color-picker').value);
+    }
+
+    setTheme(id) {
+        const t = this.themes[id]; if (!t) return;
+        const root = document.documentElement.style;
+        root.setProperty('--bg-dark', t.bg);
+        root.setProperty('--card-bg', t.card);
+        root.setProperty('--primary', t.primary);
+        root.setProperty('--border', t.border);
+    }
+
+    loadPalette(id) {
+        if (id === 'custom') return;
+        const grid = this.dom('color-palette');
+        if (!grid) return;
+        grid.querySelectorAll('.palette-color').forEach(c => c.remove());
+        if (this.presets[id]) this.presets[id].forEach(c => this.addColor(c));
+    }
+
+    addColor(color) {
+        const grid = this.dom('color-palette');
+        if (!grid) return;
+        const item = document.createElement('div');
+        item.className = 'palette-color';
+        item.style.backgroundColor = color;
+        item.onclick = () => { if (this.dom('color-picker')) this.dom('color-picker').value = this.rgbToHex(color); };
+        item.oncontextmenu = (e) => { e.preventDefault(); item.remove(); };
+        const btn = this.dom('btn-save-color');
+        if (btn) grid.insertBefore(item, btn); else grid.appendChild(item);
+    }
+
+    rgbToHex(rgb) {
+        if (rgb.startsWith('#')) return rgb;
+        const p = rgb.match(/\d+/g);
+        if (!p) return rgb;
+        return "#" + p.map(v => parseInt(v).toString(16).padStart(2, '0')).join("");
+    }
+}
+
+// ========== 2. Navigation Manager ==========
+class NavigationManager extends EditorModule {
+    constructor(app) {
+        super();
+        this.app = app;
+        this.panels = {
+            design: this.dom('design-view'),
+            prototype: this.dom('prototype-view'),
+            hardware: this.dom('hardware-view')
+        };
+        this.btns = {
+            design: this.dom('nav-design'),
+            prototype: this.dom('nav-prototype'),
+            hardware: this.dom('nav-hardware')
+        };
+        this._setup();
+    }
+
+    _setup() {
+        Object.keys(this.btns).forEach(id => {
+            if (this.btns[id]) this.btns[id].onclick = () => this.switch(id);
+        });
+    }
+
+    switch(viewId) {
+        Object.keys(this.panels).forEach(k => {
+            if (this.panels[k]) this.panels[k].classList.toggle('active', k === viewId);
+            if (this.btns[k]) this.btns[k].classList.toggle('active', k === viewId);
+        });
+
+        if (viewId === 'prototype') {
+            // Copy current design canvas into the proto display
+            if (this.app.layers) { // Check if design module is active
+                this._syncDesignToProto();
+            }
+            if (this.app.prototype) this.app.prototype.sync();
+        }
+
+        if (this.app.status) this.app.status.update(viewId);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    _syncDesignToProto() {
+        const previewCanvas = document.getElementById('preview-canvas');
+        const protoCanvas = document.getElementById('proto-canvas');
+        if (!previewCanvas || !protoCanvas) return null;
+
+        const ctx = protoCanvas.getContext('2d');
+        ctx.clearRect(0, 0, protoCanvas.width, protoCanvas.height);
+        ctx.drawImage(previewCanvas, 0, 0, protoCanvas.width, protoCanvas.height);
+
+        // Return the dataURL so it can be persisted
+        return protoCanvas.toDataURL('image/png');
+    }
+}
+
+// ========== 3. Layout Manager ==========
+// Moved to designer.js
+
+// ========== 4. Prototype Manager (MVC) ==========
+// Logic fully moved to prototype/model.js, view.js, controller.js
+// Powered by C# PrototypeService Minimal APIs
+
+// ========== 5. Layer Manager ==========
+// Moved to designer.js
+
+// ========== 6. Drawing Manager ==========
+// Moved to designer.js
+
+// ========== 7. Main App Orchestrator ==========
+class PixelStreamApp extends EditorModule {
+    constructor() {
+        super();
+        this.theme = new ThemeManager();
+        this.nav = new NavigationManager(this);
+        this.stage = new StageManager(this);
+        
+        // Optional Modules (Lazy Load or External)
+        this.layers = (typeof LayerManager !== 'undefined') ? new LayerManager(this) : null;
+        this.layout = (typeof LayoutManager !== 'undefined') ? new LayoutManager(this) : null;
+        this.drawing = (typeof DrawingManager !== 'undefined') ? new DrawingManager(this) : null;
+        
+        // REBUILT MVC PROTOTYPE (created here, initialized after api is ready)
+        if (typeof PrototypeController !== 'undefined') {
+            const pModel = new PrototypeModel();
+            const pView = new PrototypeView();
+            this.prototype = new PrototypeController(pModel, pView);
+        } else {
+            this.prototype = null;
+        }
+
+        this.currentTool = 'brush';
+        this.undoStack = []; this.redoStack = []; this.MAX_HISTORY = 30;
+        this.collection = [];
+    }
+
+    /** Called from script init after api is assigned */
+    start() {
+        this.init();
+        // Now api exists — wire prototype to it
+        if (this.prototype) this.prototype.init(this);
+        if (this.stage) this.stage.refresh();
+    }
+
+    init(fullClear = false) {
+        // Design Initialization (If Module Present)
+        if (this.layers) {
+            const w = parseInt(this.dom('canvas-width')?.value) || 240;
+            const h = parseInt(this.dom('canvas-height')?.value) || 240;
+            const oldData = (!fullClear && this.layers.layers) 
+                ? this.layers.layers.map(l => ({ name: l.name, data: l.canvas.toDataURL(), visible: l.visible })) 
+                : [];
+            
+            if (this.layers.layers) this.layers.layers.forEach(l => l.canvas.remove());
+            this.layers.layers = [];
+            
+            if (oldData.length > 0) {
+                oldData.forEach((d, i) => {
+                    this.layers.add(d.name, d.data, true);
+                    this.layers.layers[i].visible = d.visible;
+                    this.layers.layers[i].canvas.style.display = d.visible ? 'block' : 'none';
+                });
+            } else { this.layers.add("Fundo", null, true); }
+            
+            ['grid-canvas', 'preview-canvas', 'temp-canvas'].forEach(id => {
+                const c = this.dom(id); if (c) { c.width = w; c.height = h; }
+            });
+            const wrapper = this.dom('canvas-wrapper');
+            if (wrapper) { wrapper.style.width = w + 'px'; wrapper.style.height = h + 'px'; }
+            
+            this.refresh();
+        }
+        
+        this._setupTools();
+        this._wireUI();
+    }
+
+    _wireUI() {
+        if (this.layers) {
+            const btnAdd = this.dom('btn-add-layer');
+            if (btnAdd) btnAdd.onclick = () => this.layers.add();
+            
+            const fileInput = this.dom('file-input');
+            if (fileInput) fileInput.onchange = (e) => this._importImage(e);
+            
+            if (this.dom('btn-merge-layers')) this.dom('btn-merge-layers').onclick = () => this._mergeLayers();
+        }
+
+        const btnUndo = this.dom('btn-undo');
+        if (btnUndo) btnUndo.onclick = () => this.undo();
+
+        const btnRedo = this.dom('btn-redo');
+        if (btnRedo) btnRedo.onclick = () => this.redo();
+
+        const brushSize = this.dom('brush-size');
+        if (brushSize) brushSize.oninput = (e) => {
+            if (this.dom('brush-size-val')) this.dom('brush-size-val').textContent = e.target.value;
+        };
+
+        const wInput = this.dom('canvas-width');
+        const hInput = this.dom('canvas-height');
+        if (wInput) wInput.onchange = () => this.init();
+        if (hInput) hInput.onchange = () => this.init();
+
+        const btnExport = this.dom('btn-export');
+        if (btnExport) btnExport.onclick = () => this._export();
+
+        // Filters
+        if (this.dom('filter-gray')) this.dom('filter-gray').onclick = () => this._applyFilter('gray');
+        if (this.dom('filter-invert')) this.dom('filter-invert').onclick = () => this._applyFilter('invert');
+        if (this.dom('filter-bright')) this.dom('filter-bright').onclick = () => this._applyFilter('bright');
+        if (this.dom('filter-contrast')) this.dom('filter-contrast').onclick = () => this._applyFilter('contrast');
+
+        // Project Persistence
+        if (this.dom('btn-save-project')) this.dom('btn-save-project').onclick = () => this._saveProject();
+        if (this.dom('btn-load-project')) this.dom('btn-load-project').onclick = () => this.dom('project-input').click();
+        if (this.dom('project-input')) this.dom('project-input').onchange = (e) => this._loadProject(e);
+
+        // UI Components
+        if (this.dom('add-ui-slider')) this.dom('add-ui-slider').onclick = () => this._addUIComponent('slider');
+        if (this.dom('add-ui-switch')) this.dom('add-ui-switch').onclick = () => this._addUIComponent('switch');
+        if (this.dom('add-ui-bar')) this.dom('add-ui-bar').onclick = () => this._addUIComponent('bar');
+
+        // Collection & Animation
+        if (this.dom('btn-add-collection')) this.dom('btn-add-collection').onclick = () => this._addToCollection();
+        if (this.dom('btn-export-collection')) this.dom('btn-export-collection').onclick = () => this._exportCollection();
+
+        // Import current design into Prototype display + persist as screen background
+        const btnImport = this.dom('btn-import-design');
+        if (btnImport) btnImport.onclick = async () => {
+            const dataUrl = this.nav._syncDesignToProto(); // Ensure btnImport is properly checked before assignment
+            if (!dataUrl) return;
+
+            // Persist as the active screen's background so it's saved across screen switches
+            const activeId = this.prototype?.model?.activeScreenId;
+            if (activeId && this.prototype) {
+                await this.prototype.callApi('/screen/background', 'POST', {
+                    screenId: activeId,
+                    assetName: null,
+                    dataUrl: dataUrl
+                });
+            }
+
+            this.toast.show('success', 'Importado!', 'Imagem salva como fundo da tela ativa no Protótipo.');
+        };
+    }
+
+    _addToCollection() {
+        const canvas = this.dom('preview-canvas');
+        if (!canvas) return;
+
+        if (!this.collection) this.collection = [];
+
+        const dataUrl = canvas.toDataURL('image/png');
+        this.collection.push({
+            id: Date.now(),
+            data: dataUrl,
+            width: canvas.width,
+            height: canvas.height
+        });
+
+        this._renderCollection();
+        if (this.prototype) this.prototype.importFromCollection(dataUrl);
+        this.toast.show('success', 'Adicionado à Coleção', `Sprite ${this.collection.length} adicionado.`);
+    }
+
+    _renderCollection() {
+        const list = this.dom('sprite-list');
+        if (!list) return;
+
+        list.innerHTML = '';
+        if (!this.collection || this.collection.length === 0) {
+            list.innerHTML = '<div class="hint">Coleção vazia.</div>';
+            return;
+        }
+
+        this.collection.forEach((sprite, index) => {
+            const item = document.createElement('div');
+            item.className = 'layer-item';
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.gap = '10px';
+            item.style.padding = '5px';
+            item.style.cursor = 'pointer';
+            item.style.borderBottom = '1px solid var(--border)';
+
+            const img = document.createElement('img');
+            img.src = sprite.data;
+            img.style.width = '32px';
+            img.style.height = '32px';
+            img.style.objectFit = 'contain';
+            img.style.background = '#000';
+            img.style.border = '1px solid var(--border)';
+
+            const name = document.createElement('span');
+            name.textContent = `Sprite_${index}`;
+            name.style.flex = '1';
+            name.style.fontSize = '12px';
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'text-btn small-btn';
+            btnDel.innerHTML = '<i data-lucide="trash-2" style="width:14px; color:#ef4444;"></i>';
+            btnDel.title = 'Excluir da Coleção';
+            btnDel.onclick = (e) => {
+                e.stopPropagation();
+                this.collection.splice(index, 1);
+                this._renderCollection();
+            };
+
+            const btnProto = document.createElement('button');
+            btnProto.className = 'text-btn small-btn';
+            btnProto.innerHTML = '<i data-lucide="monitor-play" style="width:14px; color:#38bdf8;"></i>';
+            btnProto.title = 'Enviar para Prototipagem';
+            btnProto.onclick = (e) => {
+                e.stopPropagation();
+                if (this.prototype) {
+                    this.prototype.importFromCollection(sprite.data);
+                    this.nav.switch('prototype');
+                }
+            };
+
+            item.appendChild(img);
+            item.appendChild(name);
+            item.appendChild(btnProto);
+            item.appendChild(btnDel);
+
+            // Clicar no item carrega ele de volta pro canvas
+            item.onclick = () => {
+                if (this.layers && confirm('Carregar este sprite substituirá o canvas atual. Continuar?')) {
+                    // Limpa as layers atuais e carrega a imagem
+                    this.layers.layers = [];
+                    this.layers.add(`Sprite_${index}`, sprite.data, true);
+                    this layers.renderUI();
+                    this.refresh();
+                }
+            };
+
+            list.appendChild(item);
+        });
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    _exportCollection() {
+        if (!this.collection || this.collection.length === 0) {
+            return this.toast.show('warning', 'Coleção Vazia', 'Adicione sprites à coleção primeiro.');
+        }
+
+        const format = this.dom('export-format')?.value || 'rgb565';
+        const arrayName = this.dom('array-name')?.value || 'sprites';
+
+        this.toast.show('info', 'Exportação em andamento', 'Gerando arquivo...');
+        
+        let code = `// Gerado pelo PixelStream IDE v5\n`;
+        code += `// Coleção de Sprites: ${this.collection.length} imagens\n`;
+        code += `// Formato: ${format.toUpperCase()}\n\n`;
+        code += `#include <pgmspace.h>\n\n`;
+
+        const promises = this.collection.map((sprite, index) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = sprite.width;
+                    tempCanvas.height = sprite.height;
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const imgData = ctx.getImageData(0, 0, sprite.width, sprite.height).data;
+                    resolve({ index, imgData, width: sprite.width, height: sprite.height });
+                };
+                img.src = sprite.data;
+            });
+        });
+
+        Promise.all(promises).then(results => {
+            results.forEach(res => {
+                const { index, imgData, width, height } = res;
+                const spriteName = `${arrayName}_${index}`;
+
+                if (format === 'rgb565') {
+                    code += `const uint16_t ${spriteName}[${width * height}] PROGMEM = {\n  `;
+                    let count = 0;
+                    for (let i = 0; i < imgData.length; i += 4) {
+                        const r = imgData[i] >> 3;
+                        const g = imgData[i + 1] >> 2;
+                        const b = imgData[i + 2] >> 3;
+                        const rgb565 = (r << 11) | (g << 5) | b;
+
+                        code += `0x${rgb565.toString(16).padStart(4, '0').toUpperCase()}`;
+                        if (i < imgData.length - 4) code += ', ';
+
+                        count++;
+                        if (count >= 12) { code += '\n  '; count = 0; }
+                    }
+                    code += '\n};\n\n';
+                } else if (format === 'rle565') {
+                    let rleData = [];
+                    let currentPixel = -1;
+                    let runLength = 0;
+
+                    for (let i = 0; i < imgData.length; i += 4) {
+                        const r = imgData[i] >> 3;
+                        const g = imgData[i + 1] >> 2;
+                        const b = imgData[i + 2] >> 3;
+                        const rgb565 = (r << 11) | (g << 5) | b;
+
+                        if (currentPixel === -1) { currentPixel = rgb565; runLength = 1; }
+                        else if (currentPixel === rgb565 && runLength < 255) { runLength++; }
+                        else { rleData.push(runLength); rleData.push(currentPixel); currentPixel = rgb565; runLength = 1; }
+                    }
+                    if (runLength > 0) { rleData.push(runLength); rleData.push(currentPixel); }
+
+                    code += `const uint16_t ${spriteName}_rle[${rleData.length}] PROGMEM = {\n  `;
+                    let count = 0;
+                    for (let i = 0; i < rleData.length; i++) {
+                        code += `0x${rleData[i].toString(16).padStart(4, '0').toUpperCase()}`;
+                        if (i < rleData.length - 1) code += ', ';
+                        count++;
+                        if (count >= 12) { code += '\n  '; count = 0; }
+                    }
+                    code += '\n};\n\n';
+                } else if (format === 'rgb888') {
+                    code += `const uint32_t ${spriteName}[${width * height}] PROGMEM = {\n  `;
+                    let count = 0;
+                    for (let i = 0; i < imgData.length; i += 4) {
+                        const rgb888 = (imgData[i] << 16) | (imgData[i + 1] << 8) | imgData[i + 2];
+                        code += `0x${rgb888.toString(16).padStart(6, '0').toUpperCase()}`;
+                        if (i < imgData.length - 4) code += ', ';
+                        count++;
+                        if (count >= 8) { code += '\n  '; count = 0; }
+                    }
+                    code += '\n};\n\n';
+                }
+            });
+
+            // Array de ponteiros para facilitar animação
+            code += `// Array de ponteiros para facilitar iteração/animação\n`;
+            const type = format === 'rgb888' ? 'uint32_t' : 'uint16_t';
+            const suffix = format === 'rle565' ? '_rle' : '';
+            code += `const ${type}* const ${arrayName}_frames[${results.length}] PROGMEM = {\n  `;
+            code += results.map(r => `${arrayName}_${r.index}${suffix}`).join(', ');
+            code += `\n};\n`;
+
+            const blob = new Blob([code], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.download = `${arrayName}_collection.h`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            this.toast.show('success', 'Coleção Exportada', `Arquivo ${arrayName}_collection.h gerado com sucesso.`);
+        });
+    }
+
+    _addUIComponent(type) {
+        const active = this.layers ? this.layers.active : null;
+        if (!active) return;
+        const ctx = active.ctx;
+        const color = this.dom('color-picker')?.value || '#fff';
+        const w = active.canvas.width;
+        const h = active.canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+
+        if (type === 'slider') {
+            ctx.strokeRect(cx - 40, cy - 5, 80, 10);
+            ctx.fillRect(cx - 10, cy - 10, 20, 20);
+        } else if (type === 'switch') {
+            ctx.beginPath();
+            ctx.roundRect(cx - 25, cy - 12, 50, 25, 12);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cx + 12, cy, 8, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (type === 'bar') {
+            ctx.strokeRect(cx - 50, cy - 8, 100, 16);
+            ctx.fillRect(cx - 48, cy - 6, 60, 12);
+        }
+
+        this.refresh();
+        this.saveHistory();
+        this.toast.show('success', 'Componente Adicionado', `${type} criado no centro.`);
+    }
+
+    _saveProject() {
+        const data = {
+            version: '5.0',
+            width: parseInt(this.dom('canvas-width')?.value) || 240,
+            height: parseInt(this.dom('canvas-height')?.value) || 240,
+            layers: this.layers ? this.layers.layers.map(l => ({ name: l.name, data: l.canvas.toDataURL(), visible: l.visible })) : []
+        };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pixelstream_project.json';
+        a.click();
+        if(this.logger) this.logger.error('Project', 'Projeto exportado com sucesso', { width: data.width, height: data.height, layers: data.layers.length });
+        this.toast.show('success', 'Projeto Salvo', 'Arquivo JSON exportado com sucesso.');
+    }
+
+    _loadProject(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (this.dom('canvas-width')) this.dom('canvas-width').value = data.width || 240;
+                if (this.dom('canvas-height')) this.dom('canvas-height').value = data.height || 240;
+                this.init(true);
+                if (this.layers) {
+                    this.layers.layers.forEach(l => l.canvas.remove());
+                    this.layers.layers = [];
+                    data.layers.forEach((l, i) => {
+                        this.layers.add(l.name, l.data, true);
+                        this.layers.layers[i].visible = l.visible;
+                        this.layers.layers[i].canvas.style.display = l.visible ? 'block' : 'none';
+                    });
+                }
+                this.refresh();
+                if(this.logger) this.logger.error('Project', 'Projeto carregado com sucesso', { layers: data.layers.length });
+                this.toast.show('success', 'Projeto Carregado', 'O estado do editor foi restaurado.');
+            } catch (err) {
+                if(this.logger) this.logger.error('Project', 'Falha ao carregar JSON', { error: err.message });
+                this.toast.show('error', 'Erro no Carregamento', 'Arquivo JSON inválido.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    _applyFilter(type) {
+        const active = this.layers ? this.layers.active : null;
+        if (!active) return;
+        const ctx = active.ctx;
+        const id = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+        const d = id.data;
+        for (let i = 0; i < d.length; i += 4) {
+            if (type === 'gray') { const g = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; d[i] = d[i + 1] = d[i + 2] = g; }
+            if (type === 'invert') { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; }
+            if (type === 'bright') { d[i] += 20; d[i + 1] += 20; d[i + 2] += 20; }
+            if (type === 'contrast') {
+                const factor = (259 * (50 + 255)) / (255 * (259 - 50));
+                d[i] = factor * (d[i] - 128) + 128;
+                d[i + 1] = factor * (d[i + 1] - 128) + 128;
+                d[i + 2] = factor * (d[i + 2] - 128) + 128;
+            }
+        }
+        ctx.putImageData(id, 0, 0);
+        this.refresh();
+        this.saveHistory();
+    }
+
+    _mergeLayers() {
+        if (!this.layers || this.layers.layers.length < 2) return;
+        const bottom = this.layers.layers[0];
+        const bCtx = bottom.ctx;
+        for (let i = 1; i < this.layers.layers.length; i++) {
+            if (this.layers.layers[i].visible) bCtx.drawImage(this.layers.layers[i].canvas, 0, 0);
+            this.layers.layers[i].canvas.remove();
+        }
+        this.layers.layers = [bottom];
+        this layers.activeIndex = 0;
+        this.layers.renderUI();
+        this.refresh();
+        this.saveHistory();
+    }
+
+    _importImage(e) {
+        if (!this.layers) return;
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                // Dithering opcional na importação
+                const applyDithering = confirm("Deseja aplicar dithering (redução de cores) à imagem importada para adequá-la à paleta atual?");
+                if (applyDithering) {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = img.width;
+                    tempCanvas.height = img.height;
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    // Pega a paleta atual (se for preset) ou usa uma padrão de 16 cores
+                    const paletteSelect = this.dom('palette-presets');
+                    
+                    // Simple palette fallback if AI module not present
+                    let currentPalette = [[0,0,0], [255,255,255]];
+                    if (this.theme && this.theme.presets) {
+                         // logic to parse presets...
+                         // For now just use simple one
+                    }
+
+                    // this._applyFloydSteinbergDithering(ctx, rgbPalette); // Logic was in script.js but now where? 
+                    // Actually dithering logic should be in Designer module if it's drawing related.
+                    // For now, standard import.
+                    this.layers.add(file.name, event.target.result);
+                } else {
+                    this.layers.add(file.name, event.target.result);
+                }
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    _export() {
+        const canvas = this.dom('preview-canvas');
+        if (!canvas) return;
+
+        const format = this.dom('export-format')?.value || 'jpeg';
+        const arrayName = this.dom('array-name')?.value || 'image_01';
+
+        if (format === 'jpeg') {
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            const link = document.createElement('a');
+            link.download = `${arrayName}.jpg`;
+            link.href = dataUrl;
+            link.click();
+            this.toast.show('success', 'Exportação Concluída', `Imagem ${arrayName}.jpg gerada com sucesso.`);
+            return;
+        }
+        
+        // ... (C array export logic) handled by existing methods or Designer module?
+        // Since export reads from Canvas, it can stay here or move to Designer.
+        // It's cleaner in Designer but referenced by UI buttons.
+    }
+
+    _setupTools() {
+        // Tools are mostly designer related
+        const tools = ['brush', 'eraser', 'selection', 'move', 'text', 'line', 'rect', 'circle', 'picker', 'fill', 'font-gen', 'clear'];
+        tools.forEach(k => {
+            const btn = this.dom('tool-' + k);
+            if (btn) btn.onclick = async () => {
+                this.currentTool = k;
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if (k === 'clear') { if (await this.dialog.confirm('Limpar Tudo', 'Limpar todo o canvas?')) this.init(true); }
+                if (k === 'font-gen') { this.toast.show('success', 'Font Generator', 'Recurso de exportação de fonte ativado.'); }
+            };
+        });
+        const aiBtn = this.dom('tool-ai-gen');
+        if (aiBtn) aiBtn.onclick = () => { this.dom('ai-modal').style.display = 'flex'; if (typeof lucide !== 'undefined') lucide.createIcons(); };
+        document.querySelectorAll('textarea').forEach(tx => {
+            tx.onkeydown = (e) => {
+                if (e.key === 'Tab') {
+                    e.preventDefault(); const s = tx.selectionStart;
+                    tx.value = tx.value.substring(0, s) + '    ' + tx.value.substring(tx.selectionEnd);
+                    tx.selectionStart = tx.selectionEnd = s + 4;
+                }
+            };
+        });
+    }
+
+    refresh() {
+        const pCtx = this.dom('preview-canvas')?.getContext('2d');
+        if (pCtx) {
+            pCtx.clearRect(0, 0, pCtx.canvas.width, pCtx.canvas.height);
+            if (this.layers) {
+                this.layers.layers.forEach(l => { if (l.visible) pCtx.drawImage(l.canvas, 0, 0); });
+            }
+        }
+        if (this.layout) { this.layout.updateRulers(); this.layout.renderGrid(); }
+        if (this.layers) this.layers.renderUI();
+    }
+
+    saveHistory() {
+        if (!this.layers) return;
+        const snap = this.layers.layers.map(l => ({ name: l.name, data: l.canvas.toDataURL(), visible: l.visible }));
+        this.undoStack.push(JSON.stringify(snap));
+        if (this.undoStack.length > this.MAX_HISTORY) this.undoStack.shift();
+        this.redoStack = [];
+    }
+
+    undo() {
+        if (this.undoStack.length < 2) return;
+        this.redoStack.push(this.undoStack.pop());
+        const snap = JSON.parse(this.undoStack[this.undoStack.length - 1]);
+        this._applySnapshot(snap);
+    }
+
+    redo() {
+        if (this.redoStack.length === 0) return;
+        const snapStr = this.redoStack.pop();
+        this.undoStack.push(snapStr);
+        this._applySnapshot(JSON.parse(snapStr));
+    }
+
+    _applySnapshot(snap) {
+        if (!this.layers) return;
+        this.layers.layers.forEach(l => l.canvas.remove());
+        this.layers.layers = [];
+        snap.forEach((d, i) => {
+            this.layers.add(d.name, d.data, true);
+            this.layers.layers[i].visible = d.visible;
+            this.layers.layers[i].canvas.style.display = d.visible ? 'block' : 'none';
+        });
+        this.refresh();
+    }
+
+    start() {
+        try {
+            this.init();
+            this.nav.switch('design');
+            if (this.prototype) this.prototype.init(this);
+            if (this.stage) this.stage.refresh();
+            // Load key
+            if (this.agents) this.agents.load();
+            console.log("App Started Successfully");
+        } catch (e) { console.error("Crash during launch:", e); }
+    }
+}
+
+// ========== 9. Manager Classes ==========
+class DialogManager extends EditorModule {
+    _open(title, msg, iconSvg, opts = {}) {
+        return new Promise((r) => {
+            const m = this.dom('custom-dialog'); if (!m) return r(null);
+            this.dom('dialog-title').textContent = title;
+            this.dom('dialog-message').textContent = msg;
+            this.dom('dialog-icon').innerHTML = iconSvg;
+            this.dom('dialog-input').style.display = opts.showInput ? 'block' : 'none';
+            this.dom('dialog-confirm').textContent = opts.confirmText || 'OK';
+            m.style.display = 'flex';
+            this.dom('dialog-confirm').onclick = () => { m.style.display = 'none'; r(opts.showInput ? this.dom('dialog-input').value : true); };
+            this.dom('dialog-cancel').onclick = () => { m.style.display = 'none'; r(null); };
+        });
+    }
+    confirm(t, m) { return this._open(t, m, '', { showCancel: true }); }
+    prompt(t, m, d) { return this._open(t, m, '', { showInput: true, defaultValue: d }); }
+}
+
+class ToastManager extends EditorModule {
+    show(type, title, msg) {
+        const c = (type === 'error') ? this.dom('toast-error-container') : this.dom('toast-success-container');
+        if (!c) return;
+        const t = document.createElement('div');
+        t.className = `toast toast-${type}`;
+        t.innerHTML = `<b>${title}</b><p>${msg}</p>`;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+}
+
+class StatusBarManager extends EditorModule {
+    update(v) {
+        if (this.dom('status-view')) this.dom('status-view').textContent = v;
+        if (this.dom('status-time')) this.dom('status-time').textContent = new Date().toLocaleTimeString();
+    }
+}
+
+class StageManager extends EditorModule {
+    constructor(app) {
+        super();
+        this.app = app;
+        this.endpoint = '/api/stage';
+        this.files = [];
+    }
+
+    async refresh() {
+        try {
+            const resp = await this.app.api.request(this.endpoint);
+            if (!resp.ok) throw new Error('Failed to fetch stage');
+            this.files = await resp.json();
+            this.render();
+        } catch (e) {
+            console.error("Error refreshing stage:", e);
+        }
+    }
+
+    async save(filename, content) {
+        try {
+            const resp = await this.app.api.request(`${this.endpoint}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, content })
+            });
+            if (!resp.ok) throw new Error('Save failed');
+            this.app.toast.show('success', 'Stage Guardado', `Arquivo ${filename} salvo no micro-stage.`);
+            this.refresh();
+        } catch (e) {
+            this.app.toast.show('error', 'Erro ao Salvar', 'Não foi possível salvar no stage.');
+        }
+    }
+    
+    async saveImage(filename, dataUrl) {
+        return this.save(filename + (filename.toLowerCase().endsWith('.png') ? '' : '.png'), dataUrl);
+    }
+    
+    async saveCppFile(filename, content) {
+        return this.save(filename + (filename.toLowerCase().endsWith('.ino') ? '' : '.ino'), btoa(content));
+    }
+    
+    // Add missing helper from previous files
+    async saveHFile(filename, content) {
+        return this.save(filename, btoa(content));
+    }
+    
+    // Helper used by View
+    parseHFile(content) {
+        const match = content.match(/uint16_t\s+(\w+)\[\s*(\d+)\s*\]/);
+        if(!match) return null;
+        // Simple mock parse, real one would parse hex
+        return { name: match[1], width: 240, height: 240, pixels: [] };
+    }
+    
+    hArrayToDataUrl(parsed) {
+        // Mock return black image for now to prevent crash if not implemented
+        const c = document.createElement('canvas');
+        c.width = parsed.width; c.height = parsed.height;
+        return c.toDataURL();
+    }
+    
+    async renderFileList(container) {
+        if(!this.files.length) await this.refresh();
+        if(container) {
+            container.innerHTML = '';
+            this.files.forEach(f => {
+                const item = document.createElement('div');
+                item.className = 'layer-item';
+                item.textContent = f.name;
+                item.onclick = () => this.onFileSelect?.(f);
+                container.appendChild(item);
+            });
+        }
+    }
+
+    async delete(filename) {
+        if (!await this.app.dialog.confirm('Excluir Arquivo', `Deseja remover ${filename} do stage?`)) return;
+        try {
+            const resp = await this.app.api.request(`${this.endpoint}/${filename}`, { method: 'DELETE' });
+            if (!resp.ok) throw new Error('Delete failed');
+            this.refresh();
+        } catch (e) {
+            this.app.toast.show('error', 'Erro ao Excluir', 'Falha ao remover arquivo.');
+        }
+    }
+
+    render() {
+        const list = this.dom('stage-file-list');
+        if (!list) return;
+        list.innerHTML = '';
+        if (this.files.length === 0) {
+            list.innerHTML = '<div class="hint">Stage vazio.</div>';
+            return;
+        }
+        this.files.forEach(f => {
+            const item = document.createElement('div');
+            item.className = 'layer-item';
+            item.style.fontSize = '0.7rem';
+            item.innerHTML = `
+                <i data-lucide="${f.name.endsWith('.h') ? 'file-code' : 'image'}" style="width:12px;"></i>
+                <span style="flex:1; overflow:hidden; text-overflow:ellipsis;">${f.name}</span>
+                <span style="opacity:0.5; margin-right:4px;">${(f.size / 1024).toFixed(1)}K</span>
+                <button class="action-btn delete-file" title="Excluir"><i data-lucide="trash-2"></i></button>
+            `;
+            item.querySelector('.delete-file').onclick = (e) => { e.stopPropagation(); this.delete(f.name); };
+            item.onclick = () => {
+                if (f.name.match(/\.(jpg|jpeg|png|bmp)$/i)) {
+                    if (this.app.prototype) { 
+                        // this logic is better in prototype view but okay here for now
+                    }
+                }
+                this.onFileSelect?.(f);
+            };
+            list.appendChild(item);
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+
+class ApiClient extends EditorModule {
+    constructor(app) {
+        super();
+        this.app = app;
+        this.tokenKey = 'pixelstream_jwt';
+        this.accessKeyKey = 'pixelstream_access_key';
+        this.tokenEndpoint = '/api/auth/token';
+    }
+
+    setAccessKey(key) {
+        localStorage.setItem(this.accessKeyKey, key);
+        localStorage.removeItem(this.tokenKey);
+    }
+
+    getAccessKey() {
+        return localStorage.getItem(this.accessKeyKey) || '';
+    }
+
+    _getToken() {
+        return localStorage.getItem(this.tokenKey) || '';
+    }
+
+    _isTokenValid(token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1] || ''));
+            const exp = payload.exp ? payload.exp * 1000 : 0;
+            return exp > Date.now() + 60000;
+        } catch {
+            return false;
+        }
+    }
+
+    async _fetchToken() {
+        const resp = await fetch(this.tokenEndpoint, { method: 'GET' });
+        if (!resp.ok) throw new Error('token_failed');
+        const data = await resp.json();
+        if (data?.token) {
+            localStorage.setItem(this.tokenKey, data.token);
+            return data.token;
+        }
+        throw new Error('token_invalid');
+    }
+
+    async ensureToken() {
+        const token = this._getToken();
+        if (token && this._isTokenValid(token)) return token;
+        return this._fetchToken();
+    }
+
+    async request(url, options = {}) {
+        try {
+            const token = await this.ensureToken();
+            const headers = new Headers(options.headers || {});
+            headers.set('Authorization', `Bearer ${token}`);
+            return fetch(url, { ...options, headers });
+        } catch (e) {
+            if (e.message === 'missing_access_key') {
+                this.app.toast.show('error', 'Auth', 'Configure a Chave de Acesso API.');
+            } else {
+                // this.app.toast.show('error', 'Auth', 'Falha ao autenticar na API.');
+            }
+            throw e;
+        }
+    }
+}
+
+class AgentConfigManager extends EditorModule {
+    constructor(app) {
+        super();
+        this.app = app;
+        this.endpoint = '/api/agents';
+        this._bindUI();
+    }
+
+    _bindUI() {
+        const btnOpen = this.dom('btn-agent-config');
+        if (btnOpen) btnOpen.onclick = () => this.open();
+
+        const btnClose = this.dom('btn-agent-close');
+        if (btnClose) btnClose.onclick = () => this.close();
+
+        const btnSave = this.dom('btn-agent-save');
+        if (btnSave) btnSave.onclick = () => this.save();
+    }
+
+    async open() {
+        this.load();
+        if (this.dom('agent-modal')) this.dom('agent-modal').style.display = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    close() {
+        if (this.dom('agent-modal')) this.dom('agent-modal').style.display = 'none';
+    }
+
+    async load() {
+        try {
+            const accessKey = localStorage.getItem('pixelstream_access_key') || '';
+            if (this.dom('agent-access-key')) this.dom('agent-access-key').value = accessKey;
+
+            const resp = await this.app.api.request(this.endpoint, { cache: 'no-store' });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            const key = data?.gemini?.apiKey || '';
+            if (this.dom('agent-gemini-key')) this.dom('agent-gemini-key').value = key;
+        } catch (e) {
+            // this.app.toast.show('warning', 'Aviso', 'Nao foi possivel carregar as chaves.');
+        }
+    }
+
+    async save() {
+        const accessKey = this.dom('agent-access-key')?.value.trim() || '';
+        const geminiKey = this.dom('agent-gemini-key')?.value.trim() || '';
+
+        try {
+            this.app.api.setAccessKey(accessKey);
+            const resp = await this.app.api.request(this.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Gemini: { ApiKey: geminiKey } })
+            });
+            if (resp.ok) {
+                this.app.toast.show('success', 'Configuração Salva', 'Chave criptografada no sistema principal.');
+                this.close();
+            }
+        } catch (e) {
+            this.app.toast.show('error', 'Erro', 'Falha ao salvar as chaves.');
+        }
+    }
+
+    getKey() {
+        return this.dom('agent-gemini-key')?.value || '';
+    }
+}
+
+class LogManager extends EditorModule {
+    constructor(app) {
+        super();
+        this.app = app;
+        this.logs = JSON.parse(localStorage.getItem('pixelstream_logs') || '[]');
+        this._setupGlobalErrors();
+    }
+
+    _setupGlobalErrors() {
+        window.onerror = (msg, url, line, col, error) => {
+            this.error('Global', `${msg} at ${line}:${col}`, { url, stack: error?.stack });
+        };
+        window.onunhandledrejection = (event) => {
+            this.error('Promise', event.reason?.message || 'Unhandled Rejection', { stack: event.reason?.stack });
+        };
+    }
+
+    error(context, message, data = {}) {
+        const entry = {
+            timestamp: new Date().toISOString(),
+            type: 'ERROR',
+            context,
+            message,
+            data
+        };
+        this.logs.push(entry);
+        if (this.logs.length > 100) this.logs.shift(); // Keep last 100
+        localStorage.setItem('pixelstream_logs', JSON.stringify(this.logs));
+        console.error(`[${context}] ${message}`, data);
+        this._sendToServer(entry);
+    }
+
+    _sendToServer(entry) {
+        if (!this.app.api) return;
+        this.app.api.request('/api/logs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                Context: entry.context,
+                Type: entry.type,
+                Message: entry.message,
+                Data: entry.data
+            })
+        }).catch(() => { });
+    }
+
+    exportLogs() {
+        if (this.logs.length === 0) return this.app.toast.show('info', 'Logs Vazios', 'Nenhum erro registrado até agora.');
+        const content = this.logs.map(l => `[${l.timestamp}] [${l.context}] ${l.type}: ${l.message}\nData: ${JSON.stringify(l.data, null, 2)}\`---\``).join('\n\n');
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `error_${new Date().getTime()}.log`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.app.toast.show('success', 'Logs Exportados', 'Arquivo de log baixado com sucesso.');
+    }
+
+    clear() {
+        this.logs = [];
+        localStorage.removeItem('pixelstream_logs');
+    }
+}
+
+// ========== 10. Initialization ==========
+const app = new PixelStreamApp();
+app.dialog = new DialogManager();
+app.toast = new ToastManager();
+app.status = new StatusBarManager();
+app.api = new ApiClient(app);
+app.logger = new LogManager(app);
+app.agents = new AgentConfigManager(app);
+// Optional AI module
+if (typeof AIPixelArtGenerator !== 'undefined') {
+    app.ai = new AIPixelArtGenerator(app);
+    window.generateAIPixelArt = () => app.ai.generate();
+    window.applyAIToCanvas = () => app.ai.apply();
+}
+
+window.app = app;
+window.exportErrorLog = () => app.logger.exportLogs();
+
+app.start(); // init() + prototype.init(app) after api is ready

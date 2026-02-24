@@ -1,0 +1,165 @@
+﻿using Display240Api.Models;
+
+namespace Display240Api.Services
+{
+    public class PrototypeService
+    {
+        private PrototypeProject _project = new();
+
+        public PrototypeProject GetProject() => _project;
+
+        public PrototypeScreen AddScreen(string? name = null)
+        {
+            var id = $"screen_{_project.ScreenSeq++}";
+            var screen = new PrototypeScreen
+            {
+                Id = id,
+                Name = name ?? $"Tela_{_project.Screens.Count + 1}"
+            };
+            _project.Screens.Add(screen);
+            _project.ActiveScreenId = id;
+            return screen;
+        }
+
+        public bool DeleteScreen(string id)
+        {
+            if (_project.Screens.Count <= 1) return false;
+            var screen = _project.Screens.FirstOrDefault(s => s.Id == id);
+            if (screen == null) return false;
+
+            _project.Screens.Remove(screen);
+            if (_project.ActiveScreenId == id)
+            {
+                _project.ActiveScreenId = _project.Screens[0].Id;
+            }
+            return true;
+        }
+
+        public void SelectScreen(string id)
+        {
+            if (_project.Screens.Any(s => s.Id == id))
+            {
+                _project.ActiveScreenId = id;
+                _project.SelectedElementId = null;
+            }
+        }
+
+        public PrototypeElement? AddElement(string screenId, string type, string? asset = null)
+        {
+            var screen = _project.Screens.FirstOrDefault(s => s.Id == screenId);
+            if (screen == null) return null;
+
+            var isCircle = type == "circle";
+            var el = new PrototypeElement
+            {
+                Id    = $"el_{_project.ElementSeq++}",
+                Type  = type,
+                Name  = $"{type}_{screen.Elements.Count + 1}",
+                X     = 10 + (screen.Elements.Count * 5),
+                Y     = 10 + (screen.Elements.Count * 5),
+                W     = isCircle ? 60 : 80,
+                H     = isCircle ? 60 : 40,
+                Color = "#38bdf8",
+                Asset = asset
+            };
+            screen.Elements.Add(el);
+            _project.SelectedElementId = el.Id;
+            return el;
+        }
+
+        public bool DeleteElement(string screenId, string elId)
+        {
+            var screen = _project.Screens.FirstOrDefault(s => s.Id == screenId);
+            if (screen == null) return false;
+
+            var el = screen.Elements.FirstOrDefault(e => e.Id == elId);
+            if (el == null) return false;
+
+            screen.Elements.Remove(el);
+            if (_project.SelectedElementId == elId) _project.SelectedElementId = null;
+            return true;
+        }
+
+        /// <summary>
+        /// Patch update: only updates the fields explicitly provided in the dictionary.
+        /// Fixes the X=0 bug and prevents fields from being overwritten with defaults.
+        /// </summary>
+        public void PatchElement(string screenId, string elId, Dictionary<string, object?> patch)
+        {
+            var screen = _project.Screens.FirstOrDefault(s => s.Id == screenId);
+            if (screen == null) return;
+
+            var el = screen.Elements.FirstOrDefault(e => e.Id == elId);
+            if (el == null) return;
+
+            foreach (var kv in patch)
+            {
+                var val = kv.Value?.ToString();
+                switch (kv.Key.ToLower())
+                {
+                    case "name":   if (!string.IsNullOrEmpty(val)) el.Name = val; break;
+                    case "color":  if (!string.IsNullOrEmpty(val)) el.Color = val; break;
+                    case "asset":  el.Asset = val; break;
+                    case "targetscreenid": el.TargetScreenId = val; break;
+                    case "x": if (int.TryParse(val, out var x)) el.X = x; break;
+                    case "y": if (int.TryParse(val, out var y)) el.Y = y; break;
+                    case "w": if (int.TryParse(val, out var w) && w > 0) el.W = w; break;
+                    case "h": if (int.TryParse(val, out var h) && h > 0) el.H = h; break;
+                }
+            }
+        }
+        
+        // Overload for position updates specifically to handle 0
+        public void UpdatePosition(string screenId, string elId, int x, int y)
+        {
+            var screen = _project.Screens.FirstOrDefault(s => s.Id == screenId);
+            if (screen == null) return;
+            var el = screen.Elements.FirstOrDefault(e => e.Id == elId);
+            if (el == null) return;
+            el.X = x;
+            el.Y = y;
+        }
+
+        public void AddAsset(PrototypeAsset asset)
+        {
+            // Sanitize and ensure unique
+            var safeName = System.Text.RegularExpressions.Regex.Replace(asset.Name, "[^a-zA-Z0-9_]+", "_");
+            if (char.IsDigit(safeName[0])) safeName = "a" + safeName;
+            
+            var name = safeName;
+            int counter = 1;
+            while (_project.Assets.Any(a => a.Name == name))
+            {
+                name = $"{safeName}_{counter++}";
+            }
+            asset.Name = name;
+            _project.Assets.Add(asset);
+        }
+        
+        public void DeleteAsset(string name)
+        {
+            var asset = _project.Assets.FirstOrDefault(a => a.Name == name);
+            if (asset == null) return;
+            
+            _project.Assets.Remove(asset);
+            foreach(var s in _project.Screens)
+            {
+                if (s.BackgroundAsset == name) { s.BackgroundAsset = null; s.Background = null; }
+                foreach(var el in s.Elements) { if (el.Asset == name) el.Asset = null; }
+            }
+        }
+        
+        public void UpdateScreenBackground(string screenId, string? assetName, string? dataUrl)
+        {
+            var screen = _project.Screens.FirstOrDefault(s => s.Id == screenId);
+            if (screen == null) return;
+            screen.BackgroundAsset = assetName;
+            screen.Background = dataUrl;
+        }
+        
+        public void SetSelectedElement(string? elId)
+        {
+            _project.SelectedElementId = elId;
+        }
+    }
+}
