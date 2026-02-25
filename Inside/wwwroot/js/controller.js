@@ -563,17 +563,55 @@ class PrototypeController {
             return;
         }
         if (this.draggingElement) {
-            this.draggingElement.x = Math.round(currentX - this.dragOffset.x);
-            this.draggingElement.y = Math.round(currentY - this.dragOffset.y);
+            let targetX = Math.round(currentX - this.dragOffset.x);
+            let targetY = Math.round(currentY - this.dragOffset.y);
+
+            const snapThreshold = 6;
+            const centerX = 120;
+            const centerY = 120;
+
+            // Reset guides
+            this.view.activeGuides = { x: null, y: null };
+
+            // Collect all potential snap points (Center + User Custom Guides)
+            const userGuidesV = this.app.layout ? this.app.layout.getGuidePositions('v') : [];
+            const userGuidesH = this.app.layout ? this.app.layout.getGuidePositions('h') : [];
+            const snapPointsX = [centerX, ...userGuidesV];
+            const snapPointsY = [centerY, ...userGuidesH];
+
+            // X-Axis Snap
+            const elementCenterX = targetX + this.draggingElement.w / 2;
+            for (const sx of snapPointsX) {
+                if (Math.abs(elementCenterX - sx) < snapThreshold) {
+                    targetX = sx - this.draggingElement.w / 2;
+                    this.view.activeGuides.x = sx;
+                    break;
+                }
+            }
+
+            // Y-Axis Snap
+            const elementCenterY = targetY + this.draggingElement.h / 2;
+            for (const sy of snapPointsY) {
+                if (Math.abs(elementCenterY - sy) < snapThreshold) {
+                    targetY = sy - this.draggingElement.h / 2;
+                    this.view.activeGuides.y = sy;
+                    break;
+                }
+            }
+
+            this.draggingElement.x = targetX;
+            this.draggingElement.y = targetY;
             this.view.render(this.model);
         }
     }
 
     async handleMouseUp(e) {
         if (this.resizingElement || this.draggingElement) {
+            this.view.activeGuides = { x: null, y: null }; // Clear guides on release
             this.queueSave();
             this.resizingElement = null;
             this.draggingElement = null;
+            this.view.render(this.model);
         }
     }
 

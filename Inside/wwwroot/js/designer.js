@@ -196,11 +196,40 @@ class DrawingManager extends EditorModule {
 
     _onMouseMove(e) {
         if (!this.isDrawing || !this.app.layers.active) return;
-        const [x, y] = this._getMousePos(e);
+        let [x, y] = this._getMousePos(e);
         const tool = this.app.currentTool;
         const ctx = this.app.layers.active.ctx;
         const color = this.dom('color-picker')?.value || '#fff';
         const size = parseInt(this.dom('brush-size')?.value) || 2;
+
+        // Smart Guides & Snapping (Center 120 + User Guides)
+        const snapThreshold = 5;
+        const centerX = 120;
+        const centerY = 120;
+
+        if (this.app.layout) this.app.layout.clearSmartGuides();
+
+        // Check snapping for X
+        const userGuidesV = this.app.layout ? this.app.layout.getGuidePositions('v') : [];
+        const allGuidesX = [centerX, ...userGuidesV];
+        for (const gx of allGuidesX) {
+            if (Math.abs(x - gx) < snapThreshold) {
+                x = gx;
+                if (this.app.layout) this.app.layout.showSmartGuide('v', gx);
+                break;
+            }
+        }
+
+        // Check snapping for Y
+        const userGuidesH = this.app.layout ? this.app.layout.getGuidePositions('h') : [];
+        const allGuidesY = [centerY, ...userGuidesH];
+        for (const gy of allGuidesY) {
+            if (Math.abs(y - gy) < snapThreshold) {
+                y = gy;
+                if (this.app.layout) this.app.layout.showSmartGuide('h', gy);
+                break;
+            }
+        }
 
         if (tool === 'brush' || tool === 'eraser') {
             ctx.save();
@@ -229,6 +258,7 @@ class DrawingManager extends EditorModule {
     _onMouseUp() {
         if (!this.isDrawing) return;
         this.isDrawing = false;
+        if (this.app.layout) this.app.layout.clearSmartGuides();
         const tool = this.app.currentTool;
         const active = this.app.layers.active;
         if (!active) return;
@@ -382,6 +412,8 @@ class LayoutManager extends EditorModule {
         this.rulerH = this.dom('ruler-h');
         this.rulerV = this.dom('ruler-v');
         this.guides = this.dom('guides-container');
+        this.draggingGuide = null;
+        this.guideSnapThreshold = 5;
 
         this._setupEvents();
     }
@@ -411,6 +443,10 @@ class LayoutManager extends EditorModule {
 
         const btnClear = this.dom('btn-clear-guides');
         if (btnClear) btnClear.onclick = () => { if (this.guides) this.guides.innerHTML = ''; };
+
+        // Global Guide Dragging
+        window.addEventListener('mousemove', (e) => this._handleGuideDrag(e));
+        window.addEventListener('mouseup', () => this._stopGuideDrag());
     }
 
     renderGrid() {
@@ -445,24 +481,38 @@ class LayoutManager extends EditorModule {
         const step = 20, major = 100;
 
         for (let i = 0; i <= w; i += step) {
-            const m = document.createElement('div'); m.className = 'ruler-mark';
+            const isCenter = (i === 120);
+            const isMajor = (i % major === 0) || isCenter;
+            const m = document.createElement('div');
+            m.className = 'ruler-mark' + (isCenter ? ' center-mark' : '');
             m.style.left = i + 'px';
-            m.style.height = (i % major === 0) ? '100%' : '40%';
-            if (i % major === 0) {
-                const l = document.createElement('span'); l.className = 'ruler-label';
-                l.textContent = i; l.style.left = (i + 2) + 'px';
+            m.style.height = isMajor ? '100%' : '40%';
+
+            if (isMajor) {
+                const l = document.createElement('span');
+                l.className = 'ruler-label' + (isCenter ? ' center-label' : '');
+                l.textContent = i;
+                l.style.left = (i + 2) + 'px';
+                l.id = `ruler-h-label-${i}`;
                 this.rulerH.appendChild(l);
             }
             this.rulerH.appendChild(m);
         }
 
         for (let i = 0; i <= h; i += step) {
-            const m = document.createElement('div'); m.className = 'ruler-mark';
+            const isCenter = (i === 120);
+            const isMajor = (i % major === 0) || isCenter;
+            const m = document.createElement('div');
+            m.className = 'ruler-mark' + (isCenter ? ' center-mark' : '');
             m.style.top = i + 'px';
-            m.style.width = (i % major === 0) ? '100%' : '40%';
-            if (i % major === 0) {
-                const l = document.createElement('span'); l.className = 'ruler-label';
-                l.textContent = i; l.style.top = (i + 2) + 'px';
+            m.style.width = isMajor ? '100%' : '40%';
+
+            if (isMajor) {
+                const l = document.createElement('span');
+                l.className = 'ruler-label' + (isCenter ? ' center-label' : '');
+                l.textContent = i;
+                l.style.top = (i + 2) + 'px';
+                l.id = `ruler-v-label-${i}`;
                 this.rulerV.appendChild(l);
             }
             this.rulerV.appendChild(m);
@@ -473,14 +523,110 @@ class LayoutManager extends EditorModule {
         const active = this.app.layers.active;
         if (!active) return;
         const rect = ruler.getBoundingClientRect();
-        const pos = type === 'v'
+        let pos = type === 'v'
             ? (e.clientX - rect.left) * (active.canvas.width / rect.width)
             : (e.clientY - rect.top) * (active.canvas.height / rect.height);
 
+        // Snap guide on creation
+        pos = this._snapPos(pos);
+
         const g = document.createElement('div');
         g.className = `guide guide-${type}`;
+        g.dataset.type = type;
         if (type === 'v') g.style.left = pos + 'px'; else g.style.top = pos + 'px';
+
+        g.onmousedown = (ev) => {
+            ev.stopPropagation();
+            this.draggingGuide = g;
+            g.classList.add('dragging');
+        };
+
         if (this.guides) this.guides.appendChild(g);
+        this.showSmartGuide(type, pos);
+        setTimeout(() => this.clearSmartGuides(), 500);
+    }
+
+    _snapPos(pos) {
+        const centerX = 120;
+        if (Math.abs(pos - centerX) < this.guideSnapThreshold) return centerX;
+        // Also snap to nearest 10 for "smart" feeling
+        if (Math.abs(pos - Math.round(pos / 10) * 10) < 3) return Math.round(pos / 10) * 10;
+        return Math.round(pos);
+    }
+
+    _handleGuideDrag(e) {
+        if (!this.draggingGuide) return;
+        const type = this.draggingGuide.dataset.type;
+        const active = this.app.layers.active;
+        if (!active) return;
+
+        const wrapper = this.dom('canvas-wrapper');
+        const rect = wrapper.getBoundingClientRect();
+
+        let pos = type === 'v'
+            ? (e.clientX - rect.left) * (active.canvas.width / rect.width)
+            : (e.clientY - rect.top) * (active.canvas.height / rect.height);
+
+        // Snap while dragging
+        pos = this._snapPos(pos);
+
+        if (type === 'v') this.draggingGuide.style.left = pos + 'px';
+        else this.draggingGuide.style.top = pos + 'px';
+
+        this.showSmartGuide(type, pos);
+
+        // If dragged way out, prepare for deletion
+        if (pos < -20 || pos > 260) {
+            this.draggingGuide.style.opacity = '0.3';
+        } else {
+            this.draggingGuide.style.opacity = '1';
+        }
+    }
+
+    _stopGuideDrag() {
+        if (!this.draggingGuide) return;
+
+        const type = this.draggingGuide.dataset.type;
+        let pos = parseInt(type === 'v' ? this.draggingGuide.style.left : this.draggingGuide.style.top);
+
+        // Delete if dragged out
+        if (pos < -20 || pos > 260) {
+            this.draggingGuide.remove();
+        }
+
+        this.draggingGuide.classList.remove('dragging');
+        this.draggingGuide = null;
+        this.clearSmartGuides();
+    }
+
+    showSmartGuide(type, pos) {
+        if (!this.guides) return;
+        this.clearSmartGuides(); // Only one smart guide per axis
+        const g = document.createElement('div');
+        g.className = `guide guide-${type} smart-guide`;
+        g.style.borderColor = 'var(--primary)';
+        g.style.borderStyle = 'dashed';
+        g.style.opacity = '0.8';
+        if (type === 'v') g.style.left = pos + 'px'; else g.style.top = pos + 'px';
+        this.guides.appendChild(g);
+
+        // Highlight ruler label
+        const rulerId = type === 'v' ? 'ruler-h' : 'ruler-v';
+        const label = document.getElementById(`${rulerId}-label-${Math.round(pos)}`);
+        if (label) label.classList.add('active-guide-label');
+    }
+
+    clearSmartGuides() {
+        if (!this.guides) return;
+        this.guides.querySelectorAll('.smart-guide').forEach(g => g.remove());
+        document.querySelectorAll('.active-guide-label').forEach(l => l.classList.remove('active-guide-label'));
+    }
+
+    getGuidePositions(type) {
+        if (!this.guides) return [];
+        const selector = type === 'v' ? '.guide-v:not(.smart-guide)' : '.guide-h:not(.smart-guide)';
+        const guides = Array.from(this.guides.querySelectorAll(selector));
+        return guides.map(g => parseInt(type === 'v' ? g.style.left : g.style.top));
     }
 }
 

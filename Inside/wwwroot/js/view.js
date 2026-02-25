@@ -47,6 +47,7 @@ class PrototypeView {
         this.imageCache = new Map();
         this._bgImage = null;
         this._codeEditedManually = false;
+        this.activeGuides = { x: null, y: null };
 
         // TFT Named Color constants (RGB565)
         this._tftColors = {
@@ -547,6 +548,28 @@ class PrototypeView {
             }
             ctx.restore();
         });
+
+        // ─── Smart Guides (Center) ───────────────────────────────────────────
+        if (canvas === this.dom.canvas && this.activeGuides) {
+            ctx.save();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = '#38bdf8'; // PixelDisplay Primary
+            ctx.lineWidth = 1;
+
+            if (this.activeGuides.x !== null) {
+                ctx.beginPath();
+                ctx.moveTo(this.activeGuides.x, 0);
+                ctx.lineTo(this.activeGuides.x, 240);
+                ctx.stroke();
+            }
+            if (this.activeGuides.y !== null) {
+                ctx.beginPath();
+                ctx.moveTo(0, this.activeGuides.y);
+                ctx.lineTo(240, this.activeGuides.y);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
     }
 
     _getImg(dataUrl) {

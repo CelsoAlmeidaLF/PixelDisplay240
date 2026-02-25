@@ -2387,3 +2387,94 @@ textarea {
     margin-bottom: 8px !important;
     background: var(--card-bg) !important;
 }
+
+/* ===== SMART GUIDES & RULERS ===== */
+.canvas-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+#guides-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.guide {
+    position: absolute;
+    background: transparent;
+    pointer-events: auto;
+    /* Enable interaction */
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.guide-v {
+    width: 5px;
+    /* Wider hit area */
+    margin-left: -2px;
+    height: 100%;
+    border-left: 1px solid rgba(56, 189, 248, 0.4);
+    top: 0;
+    cursor: col-resize;
+}
+
+.guide-h {
+    height: 5px;
+    /* Wider hit area */
+    margin-top: -2px;
+    width: 100%;
+    border-top: 1px solid rgba(56, 189, 248, 0.4);
+    left: 0;
+    cursor: row-resize;
+}
+
+.guide:hover {
+    background-color: rgba(56, 189, 248, 0.1);
+}
+
+.guide.dragging {
+    border-color: var(--primary) !important;
+    opacity: 1;
+}
+
+.smart-guide {
+    border-color: var(--primary) !important;
+    border-style: dashed !important;
+    z-index: 110;
+    opacity: 1 !important;
+}
+
+.guide-label {
+    position: absolute;
+    background: var(--primary);
+    color: #000;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 0.55rem;
+    font-weight: 800;
+}
+
+/* SMART RULER HIGHLIGHTS */
+.center-mark {
+    background-color: var(--primary) !important;
+    z-index: 10;
+}
+
+.center-label {
+    color: var(--primary) !important;
+    font-weight: 800 !important;
+}
+
+.active-guide-label {
+    color: #fff !important;
+    background-color: var(--primary);
+    border-radius: 2px;
+    padding: 0 2px;
+    box-shadow: 0 0 10px var(--primary);
+    transition: all 0.1s ease;
+}
