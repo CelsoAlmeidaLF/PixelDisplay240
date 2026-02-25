@@ -1344,7 +1344,7 @@ class PrototypeView {
                 </div>
             </div>
 
-            <button class="secondary-btn del-el-btn" style="width:100%;margin-top:12px;color:#ef4444;border-color:rgba(239,68,68,0.2);">
+            <button class="secondary-btn del-el-btn" style="width:100%; margin-top:12px; color:var(--error); border-color:var(--glass-border);">
                 <i data-lucide="trash-2" style="width:14px;"></i> Excluir
             </button>
         `;

@@ -1,3 +1,44 @@
+:root {
+    /* Cores de Interface */
+    --bg-dark: #0f172a;
+    --card-bg: #1e293b;
+    --border: #334155;
+    --secondary: #334155;
+    --primary: #38bdf8;
+    --primary-hover: #0ea5e9;
+    --accent: #818cf8;
+
+    /* Cores de Conteúdo e Status */
+    --editor-bg: #020617;
+    --success: #4ade80;
+    --error: #ef4444;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+
+    /* Cores Base */
+    --black: #000000;
+    --white: #ffffff;
+
+    /* Sombras e Efeitos */
+    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    --glass-bg: rgba(30, 41, 59, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    overflow: hidden;
+    height: 100vh;
+}
+
 .palette-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -9,7 +50,7 @@
     aspect-ratio: 1;
     border-radius: 4px;
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
     transition: transform 0.1s;
 }
 
@@ -49,11 +90,12 @@
 #live-code-preview {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.75rem;
-    color: #4ade80;
+    color: var(--success);
     white-space: pre;
     overflow: auto;
     max-height: 150px;
 }
+
 
 /* Resizable Code Editor */
 .code-editor-container {
@@ -77,33 +119,7 @@
     transition: height 0.3s ease;
 }
 
-:root {
-    --bg-dark: #0f172a;
-    --card-bg: #1e293b;
-    --primary: #38bdf8;
-    --primary-hover: #0ea5e9;
-    --secondary: #334155;
-    --accent: #818cf8;
-    --text-main: #f1f5f9;
-    --text-muted: #94a3b8;
-    --border: #334155;
-    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-}
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    overflow: hidden;
-    /* The body itself doesn't scroll; inner views handle scroll */
-    height: 100vh;
-}
 
 .app-container {
     display: flex;
@@ -643,7 +659,8 @@ button svg {
 }
 
 .secondary-btn:hover {
-    background-color: #475569;
+    background-color: var(--border);
+    /* Using variable instead of #475569 */
     transform: translateY(-1px);
 }
 
@@ -725,8 +742,8 @@ button svg {
 
 /* Editor Area */
 .editor-area {
-    background-color: #020617;
-    background-image: radial-gradient(#1e293b 1px, transparent 1px);
+    background-color: var(--editor-bg);
+    background-image: radial-gradient(var(--card-bg) 1px, transparent 1px);
     background-size: 20px 20px;
     display: flex;
     align-items: center;
@@ -743,7 +760,7 @@ button svg {
     transform-origin: center center;
     transition: transform 0.1s ease-out;
     box-shadow: 0 30px 90px rgba(0, 0, 0, 0.8);
-    background: #111;
+    background: var(--black);
     border: 1px solid var(--border);
     position: relative;
     user-select: none;
@@ -758,7 +775,7 @@ button svg {
 
 .canvas-wrapper {
     position: relative;
-    background-color: #000;
+    background-color: var(--black);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
     border: 1px solid var(--border);
     image-rendering: pixelated;
@@ -2294,9 +2311,9 @@ textarea {
 }
 
 .icon-btn-sm:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: #fff !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    background: var(--glass-border) !important;
+    color: var(--white) !important;
+    border-color: var(--glass-border) !important;
 }
 
 .icon-btn-sm i,
