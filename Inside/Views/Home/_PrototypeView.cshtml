@@ -2,7 +2,7 @@
     <!-- BARRA LATERAL ESQUERDA (Padrão Designer) -->
     <aside class="toolbar">
         <div class="tool-group">
-            <label>Comandos TFT</label>
+            <label>Comandos TFT <i data-lucide="sparkles" class="popout-btn" title="IA Architect" onclick="app.wm.createWindow('ai-gen', 'IA Architect', document.getElementById('ai-modal').querySelector('.modal-content'), 400, 300, 500, 600)"></i></label>
             <div class="inspector-section-title">Formas</div>
             <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px;">
                 <button class="tft-cmd-btn tool-btn" data-cmd="fillRect" title="fillRect"><i data-lucide="square"></i></button>
@@ -32,7 +32,7 @@
         </div>
 
         <div class="tool-group">
-            <label>Projeto</label>
+            <label>Hardware Hub <i data-lucide="external-link" class="popout-btn" title="Abrir no Protótipo" onclick="app.wm.createWindow('hw-config', 'Config Hardware', document.getElementById('hardware-view').querySelector('.sidebar').cloneNode(true), 500, 100, 350, 500)"></i></label>
             <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
                 <button id="btn-project-new" class="secondary-btn small-btn" title="Novo Projeto">
                     <i data-lucide="file-plus"></i> Novo
@@ -65,6 +65,7 @@
                     <option value="clock">Relógio Digital</option>
                     <option value="others">Outros Layouts</option>
                 </select>
+                <button id="btn-auto-layout" class="secondary-btn small-btn" title="Auto-Layout (IA)"><i data-lucide="sparkles"></i></button>
                 <button id="btn-add-screen" class="primary-btn small-btn" style="width: 32px;"><i data-lucide="plus"></i></button>
             </div>
         </div>
@@ -100,7 +101,7 @@
     <!-- BARRA LATERAL DIREITA: SIMULAÇÃO (Padrão Designer) -->
     <aside class="sidebar">
         <div class="tool-group">
-            <label>Simulação</label>
+            <label>Simulação <i data-lucide="external-link" class="popout-btn" title="Destacar Simulador" onclick="app.wm.createWindow('simulator', 'Display Simulator', document.getElementById('proto-canvas').parentElement, 800, 100, 300, 350)"></i></label>
             <div class="proto-workspace-box">
                 <div class="canvas-mount-small">
                     <canvas id="proto-canvas" width="240" height="240"></canvas>

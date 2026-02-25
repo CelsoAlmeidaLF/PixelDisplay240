@@ -290,20 +290,27 @@ header {
     display: flex;
 }
 
-/* Design, Prototype and Hardware view layout (toolbar | canvas | sidebar) */
-#design-view.active,
-#prototype-view.active,
-#hardware-view.active {
-    display: grid;
-    grid-template-columns: 240px 1fr 300px;
+/* Consolidated layout (toolbar | center | sidebar) */
+.view-panel.active {
+    display: flex !important;
     height: 100%;
-    background-color: #020617;
+    background-color: var(--bg-dark);
     overflow: hidden;
+}
+
+.editor-area {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .toolbar,
 .sidebar {
-    background: transparent;
+    background: var(--card-bg);
     border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -311,14 +318,16 @@ header {
     overflow-y: auto;
     overflow-x: hidden;
     gap: 1rem;
+    flex-shrink: 0;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s, opacity 0.3s;
 }
 
 .toolbar {
-    border-right: 1px solid var(--border);
+    width: 240px;
 }
 
 .sidebar {
-    border-left: 1px solid var(--border);
+    width: 300px;
 }
 
 /* Consolidated rules moved to end of file */
@@ -865,22 +874,6 @@ button svg {
     flex-shrink: 0;
 }
 
-.ruler-mark {
-    position: absolute;
-    background-color: #475569;
-    pointer-events: none;
-}
-
-.ruler-h .ruler-mark {
-    width: 1px;
-    bottom: 0;
-}
-
-.ruler-v .ruler-mark {
-    height: 1px;
-    right: 0;
-}
-
 .ruler-label {
     position: absolute;
     pointer-events: none;
@@ -898,6 +891,85 @@ button svg {
 .ruler-v .ruler-label {
     left: 4px;
     font-size: 8px;
+}
+
+.ruler-mark {
+    position: absolute;
+    background-color: #475569;
+    pointer-events: none;
+}
+
+.ruler-h .ruler-mark {
+    width: 1px;
+    bottom: 0;
+}
+
+.ruler-v .ruler-mark {
+    height: 1px;
+    right: 0;
+}
+
+/* Sidebar Collapse States */
+.toolbar.collapsed,
+.sidebar.collapsed {
+    width: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+
+.collapse-trigger {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 48px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-muted);
+}
+
+.collapse-trigger:hover {
+    background: var(--secondary);
+    color: var(--primary);
+}
+
+.collapse-trigger-left {
+    left: 240px;
+    border-radius: 0 8px 8px 0;
+    border-left: none;
+}
+
+.collapse-trigger-right {
+    right: 300px;
+    border-radius: 8px 0 0 8px;
+    border-right: none;
+}
+
+/* Dynamic positioning when collapsed */
+.toolbar.collapsed~.collapse-trigger-left {
+    left: 0;
+}
+
+.sidebar.collapsed~.collapse-trigger-right {
+    right: 0;
+}
+
+.popout-btn {
+    opacity: 0.4;
+    transition: opacity 0.2s;
+    cursor: pointer;
+}
+
+.tool-group label:hover .popout-btn {
+    opacity: 1;
 }
 
 /* Layers */
@@ -2333,26 +2405,6 @@ textarea {
 }
 
 /* Prototype Sidebars inherit Designer styling directly */
-#prototype-view .toolbar,
-#prototype-view .sidebar {
-    height: calc(100vh - 70px - 28px) !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    flex-shrink: 0;
-    background-color: var(--card-bg) !important;
-}
-
-#prototype-view .toolbar {
-    width: 280px !important;
-    /* Designer Parity */
-}
-
-#prototype-view .sidebar {
-    width: 330px !important;
-    /* Designer Parity */
-}
-
-/* Code IDE in Prototype - Strictly NO margins/padding */
 #prototype-view .editor-area {
     margin: 0 !important;
     padding: 0 !important;
@@ -2361,6 +2413,21 @@ textarea {
     display: flex !important;
     flex-direction: column !important;
     background-color: var(--bg-dark) !important;
+}
+
+/* Restore solid feel for sidebars */
+#prototype-view .toolbar,
+#prototype-view .sidebar {
+    height: calc(100vh - 70px - 28px) !important;
+    background-color: var(--card-bg) !important;
+}
+
+#prototype-view .toolbar {
+    border-right: 1px solid var(--border) !important;
+}
+
+#prototype-view .sidebar {
+    border-left: 1px solid var(--border) !important;
 }
 
 /* Tool Group structure remains consistent without color overrides */
@@ -2386,4 +2453,87 @@ textarea {
     align-items: center !important;
     margin-bottom: 8px !important;
     background: var(--card-bg) !important;
+}
+
+/* ===== MODULAR WORKSPACE & FLOATING WINDOWS ===== */
+.floating-window {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 2000;
+    min-width: 250px;
+    min-height: 150px;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.window-header {
+    height: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    cursor: move;
+    user-select: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.window-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--primary);
+}
+
+.window-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.win-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.win-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.window-content {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+}
+
+/* View Panel & Layout Tweaks */
+.view-panel {
+    position: relative !important;
+    display: none;
+    height: 100%;
+    overflow: hidden;
+}
+
+.view-panel.active {
+    display: flex !important;
+}
+
+.main-views {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
 }

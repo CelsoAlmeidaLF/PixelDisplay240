@@ -1,7 +1,7 @@
 <div id="design-view" class="view-panel active">
     <aside class="toolbar">
         <div class="tool-group">
-            <label>Ferramentas</label>
+            <label>Ferramentas <i data-lucide="external-link" class="popout-btn" title="IA Architect" onclick="app.wm.createWindow('ai-gen', 'IA Architect', document.getElementById('ai-modal').querySelector('.modal-content'), 400, 300, 500, 600)"></i></label>
             <div class="grid">
                 <button id="tool-brush" class="tool-btn active" title="Pincel (B)"><i data-lucide="paintbrush"></i></button>
                 <button id="tool-eraser" class="tool-btn" title="Borracha (E)"><i data-lucide="eraser"></i></button>
@@ -75,7 +75,7 @@
         </div>
 
         <div class="tool-group">
-            <label>Paleta de Cores</label>
+            <label>Paleta de Cores <i data-lucide="external-link" class="popout-btn" title="Destacar em janela" onclick="app.wm.createWindow('palette', 'Paleta de Cores', document.getElementById('color-palette').parentElement, 100, 300, 250, 300)"></i></label>
             <div id="color-palette" class="palette-grid">
                 <button id="btn-save-color" class="add-color-btn">+</button>
             </div>
@@ -149,7 +149,7 @@
         </div>
 
         <div class="tool-group">
-            <label>Gestão de Camadas</label>
+            <label>Gestão de Camadas <i data-lucide="external-link" class="popout-btn" title="Destacar Camadas" onclick="app.wm.createWindow('layers', 'Camadas', document.getElementById('layers-list').parentElement, 100, 400, 250, 350)"></i></label>
             <div id="layers-list" class="layers-list" style="max-height: 150px; overflow-y: auto;"></div>
             <div class="action-row" style="margin-top: 8px;">
                 <button id="btn-add-layer" class="secondary-btn small-btn"><i data-lucide="plus"></i> Camada</button>
@@ -158,7 +158,7 @@
         </div>
 
         <div class="tool-group">
-            <label>Live Code (C++)</label>
+            <label>Live Code (C++) <i data-lucide="external-link" class="popout-btn" title="Destacar em janela" onclick="app.wm.createWindow('live-code', 'Live Code Preview', document.getElementById('live-code-preview').parentElement, 400, 200, 500, 400)"></i></label>
             <div class="code-preview-panel">
                 <div class="proto-workspace-header" style="height: 32px; padding: 0 0.75rem !important;">
                      <div class="status-badge badge-cpp" style="background: var(--success); color: var(--black); font-size: 0.55rem; padding: 1px 4px;">C++ PREVIEW</div>
