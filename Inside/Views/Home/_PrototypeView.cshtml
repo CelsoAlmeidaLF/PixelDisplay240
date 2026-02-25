@@ -1,153 +1,118 @@
 <div id="prototype-view" class="view-panel">
-    <!-- LEFT SIDEBAR -->
-    <aside class="left-proto-sidebar">
-
-        <!-- TFT COMMANDS TOOLBAR -->
+    <!-- BARRA LATERAL ESQUERDA (Padrão Designer) -->
+    <aside class="toolbar">
         <div class="tool-group">
-            <label>
-                <span>Comandos TFT</span>
-                <span class="tool-group-hint">clique para inserir</span>
-            </label>
-
-            <!-- FORMAS -->
+            <label>Comandos TFT</label>
             <div class="inspector-section-title">Formas</div>
-            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;">
-                <button class="tft-cmd-btn tool-btn" data-cmd="fillRect"      title="fillRect — Retângulo preenchido"><i data-lucide="square"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="drawRect"      title="drawRect — Contorno"><i data-lucide="square-dashed"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="fillRoundRect" title="fillRoundRect — Arredondado"><i data-lucide="square"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="fillCircle"    title="fillCircle — Círculo"><i data-lucide="circle"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="drawCircle"    title="drawCircle — Contorno círculo"><i data-lucide="circle-dashed"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="fillTriangle"  title="fillTriangle — Triângulo"><i data-lucide="triangle"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="fillEllipse"   title="fillEllipse — Elipse"><i data-lucide="ellipsis"></i></button>
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillRect" title="fillRect"><i data-lucide="square"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawRect" title="drawRect"><i data-lucide="square-dashed"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillRoundRect" title="fillRoundRect"><i data-lucide="square"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillCircle" title="fillCircle"><i data-lucide="circle"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawCircle" title="drawCircle"><i data-lucide="circle-dashed"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillTriangle" title="fillTriangle"><i data-lucide="triangle"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillEllipse" title="fillEllipse"><i data-lucide="ellipsis"></i></button>
             </div>
 
-            <!-- LINHAS -->
             <div class="inspector-section-title">Linhas</div>
-            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;">
-                <button class="tft-cmd-btn tool-btn" data-cmd="drawLine"      title="drawLine — Linha diagonal"><i data-lucide="minus"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="drawFastHLine" title="drawFastHLine — Linha horizontal"><i data-lucide="move-horizontal"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="drawFastVLine" title="drawFastVLine — Linha vertical"><i data-lucide="move-vertical"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="drawPixel"     title="drawPixel — Pixel"><i data-lucide="dot"></i></button>
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawLine" title="drawLine"><i data-lucide="minus"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawFastHLine" title="drawFastHLine"><i data-lucide="move-horizontal"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawFastVLine" title="drawFastVLine"><i data-lucide="move-vertical"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawPixel" title="drawPixel"><i data-lucide="dot"></i></button>
             </div>
 
-            <!-- TEXTO -->
-            <div class="inspector-section-title">Texto</div>
-            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;">
-                <button class="tft-cmd-btn tool-btn" data-cmd="drawString"       title="drawString — Texto simples"><i data-lucide="type"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="drawCentreString" title="drawCentreString — Texto centralizado"><i data-lucide="align-center"></i></button>
-            </div>
-
-            <!-- TELA -->
-            <div class="inspector-section-title">Tela</div>
-            <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:4px;">
-                <button class="tft-cmd-btn tool-btn" data-cmd="fillScreen" title="fillScreen — Fundo sólido"><i data-lucide="panel-top"></i></button>
-                <button class="tft-cmd-btn tool-btn" data-cmd="pushImage"  title="pushImage — Imagem PROGMEM"><i data-lucide="image"></i></button>
+            <div class="inspector-section-title">Texto & Tela</div>
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 4px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawString" title="drawString"><i data-lucide="type"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawCentreString" title="drawCentreString"><i data-lucide="align-center"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillScreen" title="fillScreen"><i data-lucide="panel-top"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="pushImage" title="pushImage"><i data-lucide="image"></i></button>
             </div>
         </div>
 
-        <!-- IMPORTAR IMAGEM (.jpg/.bmp) -->
         <div class="tool-group">
-            <label>Importar Imagem</label>
-            <button id="btn-upload-image" class="secondary-btn small-btn" style="width:100%;">
-                <i data-lucide="image"></i> JPG / BMP / PNG
-            </button>
-            <input type="file" id="proto-image-upload" accept="image/jpeg,image/bmp,image/png,.bmp" style="display:none;">
-        </div>
-
-
-        <!-- EXPORTAR DESIGN -->
-        <div class="tool-group">
-             <label>Exportar</label>
-             <button id="btn-import-design" class="tool-btn" title="Baixar Design (.h / .jpg)"
-                     style="width:100%; background:linear-gradient(135deg,#4ade80,#22d3ee); color:#000; font-weight:700;">
-                 <i data-lucide="download-cloud"></i> Baixar Design
-             </button>
-        </div>
-        
-        <!-- INTELIGÊNCIA ARTIFICIAL -->
-        <div class="tool-group">
-            <label>I.A. Architect</label>
-            <button id="btn-auto-layout" class="primary-btn tool-btn ai-layout-btn" title="Auto-Layout com IA">
-                <i data-lucide="sparkles"></i> Auto-Layout ✨
-            </button>
-        </div>
-
-        <!-- TELAS DO PROJETO -->
-        <div class="tool-group">
-            <label>Telas</label>
-            <div id="screen-list" class="proto-screen-list"></div>
-            
-            <div style="display:flex; gap:4px; margin-top:8px; align-items:center;">
-                <select id="screen-template-select" style="flex:1; height:28px; font-size:0.7rem; padding:0 6px; border-radius:6px; background:var(--bg-dark); color:var(--text-muted); border:1px solid var(--border);">
-                    <option value="">Modelo: Vazio</option>
-                    <option value="loading">Modelo: Loading</option>
-                    <option value="menu">Modelo: Menu</option>
-                    <option value="dashboard">Modelo: Dashboard</option>
-                </select>
-                <button id="btn-add-screen" class="secondary-btn small-btn" style="width:32px; height:28px; justify-content:center; padding:0;" title="Adicionar Tela">
-                    <i data-lucide="plus"></i>
+            <label>Transferência</label>
+            <div class="action-row">
+                <button id="btn-upload-image" class="secondary-btn small-btn" style="flex: 1;">
+                    <i data-lucide="image"></i> Imagem
+                </button>
+                <button id="btn-import-design" class="primary-btn small-btn" style="flex: 1.5; font-weight: 800;">
+                    <i data-lucide="download-cloud"></i> Baixar
                 </button>
             </div>
+            <input type="file" id="proto-image-upload" accept="image/*" style="display:none;">
         </div>
 
-        <div class="tool-group" style="flex:1; min-height:0;">
-            <label style="display:block; margin-bottom:4px;">Elementos na Tela</label>
-            <div style="margin-bottom:8px;">
-                <div id="proto-sync-status" class="sync-badge"></div>
+        <div id="screen-list-container" class="tool-group">
+            <label>Telas</label>
+            <div id="screen-list" class="proto-scroll-area"></div>
+            <div class="action-row" style="margin-top: 8px;">
+                <select id="screen-template-select" class="input-field compact" style="flex: 1; height: 28px;">
+                    <option value="">Vazio</option>
+                    <option value="dashboard">Dashboard</option>
+                    <option value="menu">Menu</option>
+                    <option value="loading">Loading</option>
+                </select>
+                <button id="btn-add-screen" class="primary-btn small-btn" style="width: 32px;"><i data-lucide="plus"></i></button>
             </div>
-            <div id="proto-element-list" class="layers-list" style="flex:1; overflow-y:auto;"></div>
         </div>
 
+        <div id="element-list-container" class="tool-group">
+            <label>Elementos</label>
+            <div id="proto-element-list" class="proto-scroll-area"></div>
+        </div>
     </aside>
 
-
-    <!-- CENTER: CODE EDITOR -->
-    <section class="proto-code-area">
+    <!-- ÁREA CENTRAL: EDITOR (Padrão Designer) -->
+    <section class="editor-area">
         <div class="proto-workspace-header">
             <div class="proto-workspace-title-group">
-                <div class="status-badge badge-cpp">C++ CODE</div>
-                <h2 class="proto-filename">pixelstream_v5.ino</h2>
+                <div class="status-badge badge-cpp">C++ SOURCE</div>
+                <h2 style="font-size: 0.85rem; font-family: 'JetBrains Mono'; color: var(--primary);">pixelstream_v5.ino</h2>
             </div>
-            <div class="workspace-actions" style="display:flex;gap:8px;">
-                <button class="primary-btn small-btn" onclick="
+            <div class="action-row">
+                <button class="secondary-btn small-btn" onclick="
                     const code = document.getElementById('proto-code-preview').value;
                     navigator.clipboard.writeText(code);
-                    if(app?.toast) app.toast.show('success','Código Copiado','');">
+                    if(app?.toast) app.toast.show('success','Copiado','');">
                     <i data-lucide="copy"></i> Copiar
                 </button>
             </div>
         </div>
-        <div class="code-editor-main" style="position: relative; overflow: hidden;">
+        <div class="code-editor-main">
             <div id="proto-code-preview-monaco" style="width: 100%; height: 100%;"></div>
             <textarea id="proto-code-preview" style="display:none;"></textarea>
         </div>
     </section>
 
-    <!-- RIGHT SIDEBAR: DISPLAY PREVIEW + PROPERTIES -->
-    <aside class="right-proto-sidebar">
-
-        <!-- DISPLAY PREVIEW - sempre fixo no topo -->
-        <div class="proto-workspace-box">
-            <div class="inspector-label" style="padding:0.5rem;background:rgba(0,0,0,0.2);font-size:0.6rem;color:var(--primary);font-weight:800;display:flex;justify-content:space-between;">
-                <span>DISPLAY 240×240</span>
-                <span id="active-screen-title">Screen 1</span>
+    <!-- BARRA LATERAL DIREITA: SIMULAÇÃO (Padrão Designer) -->
+    <aside class="sidebar">
+        <div class="tool-group">
+            <label>Simulação</label>
+            <div class="proto-workspace-box">
+                <div class="canvas-mount-small">
+                    <canvas id="proto-canvas" width="240" height="240"></canvas>
+                </div>
             </div>
-            <div class="canvas-mount-small">
-                <canvas id="proto-canvas" width="240" height="240"></canvas>
+            <div class="action-row">
+                <button id="btn-proto-run" class="primary-btn small-btn" style="flex: 1;"><i data-lucide="play"></i> Iniciar</button>
+                <button id="btn-proto-stop" class="secondary-btn small-btn"><i data-lucide="square"></i></button>
             </div>
         </div>
 
-        <!-- PROPERTIES -->
-        <div class="tool-group inspector-group" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+        <div id="properties-container" class="tool-group">
             <label>Propriedades</label>
-            <div id="proto-interaction-panel" class="inspector-details" style="flex:1;"></div>
+            <div id="proto-interaction-panel" class="proto-scroll-area"></div>
         </div>
 
-        <!-- SCREEN THUMBNAILS -->
-        <div class="proto-gallery-vertical">
-            <label>Telas</label>
-            <div id="proto-main-container" class="preview-vertical-list"></div>
+        <div id="gallery-container" class="tool-group">
+            <label>Galeria de Telas</label>
+            <div id="proto-main-container" class="preview-vertical-list proto-scroll-area"></div>
         </div>
-
+        
+        <div id="proto-asset-list" style="display:none;"></div>
     </aside>
 </div>
+
+

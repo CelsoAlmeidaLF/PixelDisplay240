@@ -1,64 +1,101 @@
 <div id="hardware-view" class="view-panel">
-    <div style="max-width: 600px; margin: 4rem auto; background: var(--card-bg); padding: 2rem; border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--shadow);">
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-            <i data-lucide="cpu" class="icon" style="color: var(--primary); width: 32px; height: 32px;"></i>
-            <h2 style="margin: 0;">Configuração de Hardware</h2>
+    <!-- LEFT SIDEBAR: HARDWARE HUB -->
+    <aside class="toolbar">
+        <div class="tool-group">
+            <label>Hardware Hub</label>
+            <div class="grid">
+                <button class="tool-btn active" title="Configurações Gerais"><i data-lucide="cpu"></i> Config</button>
+                <button class="tool-btn" title="Flash Firmware"><i data-lucide="zap"></i> Flash</button>
+                <button class="tool-btn" title="Terminal Serial"><i data-lucide="terminal"></i> Terminal</button>
+                <button class="tool-btn" title="Monitor de Rede"><i data-lucide="wifi"></i> Network</button>
+            </div>
         </div>
 
         <div class="tool-group">
-            <label>Controlador & Display</label>
-            <div class="grid">
-                <div class="input-field">
+            <label>Ações Rápidas</label>
+            <button class="primary-btn" style="width: 100%; margin-bottom: 8px;"><i data-lucide="save"></i> Gravar HW</button>
+            <button class="secondary-btn" style="width: 100%;"><i data-lucide="refresh-cw"></i> Reset</button>
+        </div>
+    </aside>
+
+    <!-- CENTER AREA: SYSTEM LOG / MONITOR -->
+    <section class="editor-area">
+        <div class="canvas-container" style="background: #000; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column;">
+            <div class="proto-workspace-header" style="border-radius: 12px 12px 0 0;">
+                <div class="toolbar-group">
+                    <div class="breadcrumb">
+                        <div class="breadcrumb-item"><i data-lucide="terminal"></i> system-log</div>
+                        <div class="breadcrumb-separator">/</div>
+                        <div class="breadcrumb-item breadcrumb-active">monitor.log</div>
+                    </div>
+                </div>
+            </div>
+            <div style="flex: 1; padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #4ade80; overflow-y: auto;">
+                <p>> Initializing Hardware Bridge...</p>
+                <p>> Board: ESP32-S3 detected</p>
+                <p>> Serial communication established at 115200bps</p>
+                <p class="blink">_</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- RIGHT SIDEBAR: HARDWARE PROPERTIES -->
+    <aside class="sidebar">
+        <div class="tool-group">
+            <label>Propriedades Físicas</label>
+            <div class="inspector-section-title">Display & Driver</div>
+            <div class="inspector-details">
+                <div class="input-field compact">
                     <span>Controlador</span>
                     <select id="hw-controller">
                         <option value="ST7789">ST7789 (IPS)</option>
                         <option value="ILI9341">ILI9341 (TFT)</option>
-                        <option value="SSD1306">SSD1306 (OLED)</option>
                         <option value="GC9A01">GC9A01 (Circular)</option>
                     </select>
                 </div>
-                <div class="input-field">
+                <div class="input-field compact">
                     <span>Resolução</span>
                     <select id="hw-resolution">
                         <option value="240x240">240x240 px</option>
                         <option value="240x320">240x320 px</option>
-                        <option value="128x64">128x64 px</option>
                         <option value="320x480">320x480 px</option>
                     </select>
                 </div>
             </div>
-        </div>
 
-        <div class="tool-group">
-            <label>Pinagem SPI (Interface)</label>
-            <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
-                <div class="input-field"><span>MOSI (SDA)</span><input type="number" id="pin-mosi" value="23"></div>
-                <div class="input-field"><span>SCK (SCL)</span><input type="number" id="pin-sck" value="18"></div>
-                <div class="input-field"><span>MISO</span><input type="number" id="pin-miso" value="19"></div>
+            <div class="inspector-section-title">Pinagem SPI</div>
+            <div class="grid" style="--grid-min: 45%;">
+                <div class="input-field compact"><span>MOSI (SDA)</span><input type="number" id="pin-mosi" value="23"></div>
+                <div class="input-field compact"><span>SCK (SCK)</span><input type="number" id="pin-sck" value="18"></div>
+                <div class="input-field compact"><span>CS (Chip)</span><input type="number" id="pin-cs" value="5"></div>
+                <div class="input-field compact"><span>DC (Data)</span><input type="number" id="pin-dc" value="2"></div>
+            </div>
+
+            <div class="inspector-section-title">Extras</div>
+            <div class="grid" style="--grid-min: 45%;">
+                <div class="input-field compact"><span>RST</span><input type="number" id="pin-rst" value="4"></div>
+                <div class="input-field compact"><span>BL (Back)</span><input type="number" id="pin-bl" value="15"></div>
             </div>
         </div>
 
         <div class="tool-group">
-            <label>Sinais de Controle</label>
-            <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
-                <div class="input-field"><span>CS (Chip Select)</span><input type="number" id="pin-cs" value="5"></div>
-                <div class="input-field"><span>DC (Data/Cmd)</span><input type="number" id="pin-dc" value="2"></div>
-                <div class="input-field"><span>RST (Reset)</span><input type="number" id="pin-rst" value="4"></div>
-                <div class="input-field"><span>BL (Backlight)</span><input type="number" id="pin-bl" value="15"></div>
+            <label>Performance SPI</label>
+            <div class="input-field compact">
+                <span>Velocidade SPI</span>
+                <select id="hw-spi-speed">
+                    <option value="80000000">80.0 MHz</option>
+                    <option value="40000000">40.0 MHz</option>
+                    <option value="20000000">20.0 MHz</option>
+                </select>
             </div>
         </div>
 
-        <div class="tool-group">
-            <label>Velocidade SPI</label>
-            <select id="hw-spi-speed">
-                <option value="80000000">80.0 MHz (Ultra Fast)</option>
-                <option value="40000000">40.0 MHz (Fast)</option>
-                <option value="20000000">20.0 MHz (Standard)</option>
-                <option value="10000000">10.0 MHz (Slow/Safe)</option>
-            </select>
+        <div class="tool-group" style="margin-top: auto;">
+             <div class="hint" style="text-align: center; font-size: 0.65rem;">
+                <i data-lucide="info" style="width: 12px; margin-bottom: 4px;"></i><br>
+                Hardware Bridge v1.0.2<br>ESP32-S3 High-Speed Driver
+             </div>
         </div>
+    </aside>
 
-        <button class="primary-btn" style="width:100%; margin-top:1rem; height: 50px; font-size: 1rem;"><i data-lucide="save"></i> Salvar Configuração de Hardware</button>
-        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 1rem; text-align: center;">Esses pinos serão incluídos automaticamente como definições no código exportado.</p>
-    </div>
 </div>

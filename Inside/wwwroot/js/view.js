@@ -322,34 +322,38 @@ class PrototypeView {
         if (window.lucide) window.lucide.createIcons();
     }
 
-    // ─── Main Gallery ──────────────────────────────────────────────────────────
+    // ─── Main Gallery (Compact Navigation Sidebar) ──────────────────────────
     renderMainGallery(model) {
         if (!this.dom.mainGallery) return;
         this.dom.mainGallery.innerHTML = '';
+        this.dom.mainGallery.className = 'preview-vertical-list';
 
         model.screens.forEach(screen => {
             const isActive = screen.id === model.activeScreenId;
             const card = document.createElement('div');
-            card.className = `screen-card ${isActive ? 'active' : ''}`;
+            card.className = `screen-card-compact ${isActive ? 'active' : ''}`;
             card.onclick = () => this.onSelectScreen?.(screen.id);
-            card.style.cssText = `
-                display: flex; flex-direction: column; padding: 12px; gap: 8px;
-                width: 220px;
-                background: ${isActive ? 'rgba(56, 189, 248, 0.1)' : 'var(--card-bg)'};
-                border: ${isActive ? '2px solid var(--primary)' : '1px solid var(--border)'};
-                border-radius: 12px; cursor: pointer;
-                transition: transform 0.2s, box-shadow 0.2s; position: relative;
-            `;
-            const title = document.createElement('div');
-            title.style.cssText = 'font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;';
-            title.textContent = screen.name;
 
             const canvas = document.createElement('canvas');
             canvas.width = 240; canvas.height = 240;
-            canvas.style.cssText = 'width: 100%; height: auto; background: #000; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
 
-            card.appendChild(title);
+            const info = document.createElement('div');
+            info.className = 'screen-card-info';
+
+            const name = document.createElement('span');
+            name.className = 'screen-name';
+            name.textContent = screen.name;
+
+            const meta = document.createElement('span');
+            meta.className = 'screen-meta';
+            meta.textContent = `${screen.elements.length} elementos | ${screen.backgroundAsset || 'Sem fundo'}`;
+
+            info.appendChild(name);
+            info.appendChild(meta);
+
             card.appendChild(canvas);
+            card.appendChild(info);
+
             this.dom.mainGallery.appendChild(card);
             this._drawToCanvas(screen, canvas, model.assets);
         });
@@ -1193,7 +1197,7 @@ class PrototypeView {
         if (!el) {
             this.dom.interactionPanel.innerHTML = `
                 <div class="inspector-group">
-                    <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">PROPRIEDADES DA TELA</div>
+                    <div class="inspector-section-title">PROPRIEDADES DA TELA</div>
                     <div style="display:grid;grid-template-columns:1fr;gap:12px;">
                         <div class="input-field compact">
                             <span>Nome da Tela</span>
@@ -1262,7 +1266,7 @@ class PrototypeView {
 
         this.dom.interactionPanel.innerHTML = `
             <div class="inspector-group">
-                <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">PROPRIEDADES</div>
+                <div class="inspector-section-title">PROPRIEDADES</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                     <div class="input-field compact">
                         <span>Nome</span>
@@ -1282,7 +1286,7 @@ class PrototypeView {
             </div>
 
             <div class="inspector-group" style="margin-top:12px;">
-                <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">POSIÇÃO & TAMANHO</div>
+                <div class="inspector-section-title">POSIÇÃO & TAMANHO</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                     <div class="input-field compact">
                         <span>X</span>
@@ -1316,7 +1320,7 @@ class PrototypeView {
             </div>
 
             <div class="inspector-group" style="margin-top:12px;">
-                <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">LÓGICA DINÂMICA</div>
+                <div class="inspector-section-title">LÓGICA DINÂMICA</div>
                 <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;">
                     <div class="input-field compact">
                         <span>Vínculo Cor</span>
@@ -1329,8 +1333,8 @@ class PrototypeView {
                 </div>
             </div>
 
-            <div class="inspector-group" style="margin-top:12px;">
-                <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">INTERAÇÃO</div>
+            <div class="inspector-group">
+                <div class="inspector-section-title">INTERAÇÃO</div>
                 <div class="input-field compact">
                     <span>Ir para Tela</span>
                     <select data-prop="targetScreenId" style="width:100%;">

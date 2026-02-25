@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palheta de Cores DevOps - PixelDisplay240</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --secondary: #334155;
+            --accent: #818cf8;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #4ade80;
+            --synced: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            text-align: center;
+            padding: 2rem;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+        }
+
+        h2::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .color-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .color-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-color: var(--primary);
+        }
+
+        .swatch {
+            height: 120px;
+            width: 100%;
+        }
+
+        .info {
+            padding: 1rem;
+        }
+
+        .info .var-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .info .hex-code {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #fff;
+            display: block;
+        }
+
+        .info .desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .gradient-card {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .gradient-swatch {
+            width: 150px;
+            height: 100px;
+            flex-shrink: 0;
+        }
+
+        .gradient-info {
+            padding: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--primary);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .footer-note {
+            margin-top: 4rem;
+            padding: 2rem;
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 12px;
+            color: var(--success);
+            font-size: 0.9rem;
+        }
+
+        .footer-note b { font-weight: 800; }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>DevOps Palette</h1>
+            <p class="subtitle">Padrão de Cores para PixelDisplay240 - Versão Inside</p>
+        </header>
+
+        <section>
+            <h2>Cores Base</h2>
+            <div class="grid">
+                <!-- BG Dark -->
+                <div class="color-card">
+                    <div class="swatch" style="background: var(--bg-dark);"></div>
+                    <div class="info">
+                        <span class="var-name">--bg-dark</span>
+                        <span class="hex-code">#0F172A</span>
+                        <p class="desc">Fundo principal da aplicação</p>
+                    </div>
+                </div>
+                <!-- Card BG -->
+                <div class="color-card">
+                    <div class="swatch" style="background: var(--card-bg);"></div>
+                    <div class="info">
+                        <span class="var-name">--card-bg</span>
+                        <span class="hex-code">#1E293B</span>
+                        <p class="desc">Painéis, barras laterais e elementos de interface</p>
+                    </div>
+                </div>
+                <!-- Border -->
+                <div class="color-card">
+                    <div class="swatch" style="background: var(--border);"></div>
+                    <div class="info">
+                        <span class="var-name">--border</span>
+                        <span class="hex-code">#334155</span>
+                        <p class="desc">Divisores e bordas sutis</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Identidade & Destaque</h2>
+            <div class="grid">
+                <!-- Primary -->
+                <div class="color-card">
+                    <div class="swatch" style="background: var(--primary);"></div>
+                    <div class="info">
+                        <span class="var-name">--primary</span>
+                        <span class="hex-code">#38BDF8</span>
+                        <p class="desc">Cor Sky Blue para botões e foco principal</p>
+                    </div>
+                </div>
+                <!-- Accent -->
+                <div class="color-card">
+                    <div class="swatch" style="background: var(--accent);"></div>
+                    <div class="info">
+                        <span class="var-name">--accent</span>
+                        <span class="hex-code">#818CF8</span>
+                        <p class="desc">Indigo para detalhes e gradientes modernos</p>
+                    </div>
+                </div>
+                <!-- Success/Code -->
+                <div class="color-card">
+                    <div class="swatch" style="background: var(--success);"></div>
+                    <div class="info">
+                        <span class="var-name">#4ade80</span>
+                        <span class="hex-code">Code Green</span>
+                        <p class="desc">Utilizado para C++ Code, Badges e Terminal</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Gradientes de Interface</h2>
+            <div class="grid">
+                <div class="gradient-card">
+                    <div class="gradient-swatch" style="background: linear-gradient(135deg, var(--primary), var(--accent));"></div>
+                    <div class="gradient-info">
+                        <span class="var-name">Botões Primários</span>
+                        <span class="hex-code">Sky to Indigo Gradient</span>
+                        <p class="desc">Utilizado em botões de ação e estados "Active"</p>
+                    </div>
+                </div>
+                <div class="gradient-card">
+                    <div class="gradient-swatch" style="background: linear-gradient(135deg, #6366f1, #a855f7);"></div>
+                    <div class="gradient-info">
+                        <span class="var-name">AI Architect</span>
+                        <span class="hex-code">Indigo to Purple Gradient</span>
+                        <p class="desc">Sinalização de funcionalidades baseadas em I.A.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Status Contextuais</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Preview</th>
+                        <th>Cor / Hex</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Sincronizado</td>
+                        <td><div style="width: 20px; height: 20px; border-radius: 50%; background: #22c55e;"></div></td>
+                        <td><code style="font-family: JetBrains Mono; color: #22c55e;">#22C55E</code></td>
+                    </tr>
+                    <tr>
+                        <td>Erro / Alerta</td>
+                        <td><div style="width: 20px; height: 20px; border-radius: 50%; background: #ef4444;"></div></td>
+                        <td><code style="font-family: JetBrains Mono; color: #ef4444;">#EF4444</code></td>
+                    </tr>
+                    <tr>
+                        <td>Alteração Local</td>
+                        <td><div style="width: 20px; height: 20px; border-radius: 50%; background: #f59e0b;"></div></td>
+                        <td><code style="font-family: JetBrains Mono; color: #f59e0b;">#F59E0B</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <div class="footer-note">
+            <b>Nota de Implementação:</b> O contraste entre o fundo <code style="color:white">#0F172A</code> e o verde <code style="color:white">#4ADE80</code> é otimizado para longas sessões de programação no editor, reduzindo a fadiga ocular.
+        </div>
+    </div>
+</body>
+</html>

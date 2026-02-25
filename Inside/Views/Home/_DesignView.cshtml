@@ -14,57 +14,57 @@
                 <button id="tool-text" class="tool-btn" title="Texto (T)"><i data-lucide="type"></i></button>
                 <button id="tool-fill" class="tool-btn" title="Balde de Tinta (F)"><i data-lucide="paint-bucket"></i></button>
                 <button id="tool-font-gen" class="tool-btn" title="Gerador de Fontes"><i data-lucide="languages"></i></button>
-                <button id="tool-ai-gen" class="tool-btn" title="Gerar com IA" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);"><i data-lucide="sparkles"></i></button>
+                <button id="tool-ai-gen" class="tool-btn ai-layout-btn" title="Gerar com IA"><i data-lucide="sparkles"></i></button>
                 <button id="tool-clear" class="tool-btn" title="Limpar Tudo"><i data-lucide="trash-2"></i></button>
             </div>
         </div>
 
         <div class="tool-group">
             <label>Simetria</label>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <button id="btn-sym-x" class="secondary-btn small-btn" style="width: 100%;"><i data-lucide="divide"></i> Simetria X</button>
-                <button id="btn-sym-y" class="secondary-btn small-btn" style="width: 100%;"><i data-lucide="divide" style="transform: rotate(90deg);"></i> Simetria Y</button>
+            <div class="action-row">
+                <button id="btn-sym-x" class="secondary-btn small-btn"><i data-lucide="divide"></i> X</button>
+                <button id="btn-sym-y" class="secondary-btn small-btn"><i data-lucide="divide" style="transform: rotate(90deg);"></i> Y</button>
             </div>
         </div>
 
         <div class="tool-group">
             <label>Controles de Imagem</label>
             <div id="transform-controls" class="grid" style="display: none;">
-                <button id="btn-apply-img" class="primary-btn small-btn">Aplicar</button>
-                <button id="btn-cancel-img" class="secondary-btn small-btn">Cancelar</button>
-                <div class="input-field" style="grid-column: span 2;">
+                <div class="action-row">
+                    <button id="btn-apply-img" class="primary-btn small-btn">Aplicar</button>
+                    <button id="btn-cancel-img" class="secondary-btn small-btn">Sair</button>
+                </div>
+                <div class="input-field">
                     <span>Zoom Imagem</span>
                     <input type="range" id="img-zoom" min="0.1" max="5" step="0.1" value="1">
-                    <span id="img-zoom-val" style="font-size: 0.7rem;">1.0x</span>
+                    <span id="img-zoom-val">1.0x</span>
                 </div>
             </div>
-            <div class="grid">
-                <button id="btn-clear-guides" class="secondary-btn small-btn"><i data-lucide="delete"></i> Limpar Guias</button>
+            <button id="btn-clear-guides" class="secondary-btn small-btn"><i data-lucide="delete"></i> Limpar Guias</button>
+        </div>
+
+        <div class="tool-group">
+            <label>Filtros Rápidos</label>
+            <div class="grid" style="--grid-min: 40px;">
+                <button id="filter-gray" class="secondary-btn small-btn" title="Preto e Branco">PB</button>
+                <button id="filter-invert" class="secondary-btn small-btn" title="Inverter Cores">Inv</button>
+                <button id="filter-bright" class="secondary-btn small-btn" title="Brilho">Br+</button>
+                <button id="filter-contrast" class="secondary-btn small-btn" title="Contraste">Co+</button>
             </div>
         </div>
 
         <div class="tool-group">
-            <label>Filtros</label>
-            <div class="grid">
-                <button id="filter-gray" class="secondary-btn small-btn">PB</button>
-                <button id="filter-invert" class="secondary-btn small-btn">Inv</button>
-                <button id="filter-bright" class="secondary-btn small-btn">Br+</button>
-                <button id="filter-contrast" class="secondary-btn small-btn">Co+</button>
-            </div>
-        </div>
-
-        <div class="tool-group">
-            <label>Ajustes</label>
+            <label>Ajustes de Escova</label>
             <div class="input-field">
-                <span>Pincel: <span id="brush-size-val">2</span>px</span>
+                <span>Tamanho: <span id="brush-size-val">2</span>px</span>
                 <input type="range" id="brush-size" min="1" max="50" value="2">
             </div>
             <div class="input-field">
-                <span>Cor</span>
+                <span>Cor Principal</span>
                 <input type="color" id="color-picker" value="#38bdf8">
             </div>
             <div class="input-field">
-                <span>Dithering</span>
+                <span>Efeito Dithering</span>
                 <select id="brush-pattern">
                     <option value="solid">Sólido</option>
                     <option value="checker">Xadrez</option>
@@ -75,16 +75,19 @@
         </div>
 
         <div class="tool-group">
-            <label>Paleta</label>
+            <label>Paleta de Cores</label>
             <div id="color-palette" class="palette-grid">
                 <button id="btn-save-color" class="add-color-btn">+</button>
             </div>
-            <select id="palette-presets" style="margin-top:8px;">
-                <option value="custom">Personalizada</option>
-                <option value="pico8">PICO-8</option>
-                <option value="nes">NES</option>
-                <option value="gameboy">GameBoy</option>
-            </select>
+            <div class="input-field" style="margin-top: 8px;">
+                <span>Presets</span>
+                <select id="palette-presets">
+                    <option value="custom">Personalizada</option>
+                    <option value="pico8">PICO-8</option>
+                    <option value="nes">NES</option>
+                    <option value="gameboy">GameBoy</option>
+                </select>
+            </div>
         </div>
     </aside>
 
@@ -112,9 +115,10 @@
         <div class="tool-group">
             <label>Visualização</label>
             <div id="preview-wrapper" class="preview-box preview-dark">
-                <canvas id="preview-canvas" width="240" height="240" style="width:100%; height:auto;"></canvas>
+                <canvas id="preview-canvas" width="240" height="240"></canvas>
             </div>
-            <div class="grid" style="margin-top:8px;">
+            
+            <div class="grid" style="--grid-min: 70px; margin-top: 8px;">
                 <label class="check-container">
                     <input type="checkbox" id="toggle-grid" checked>
                     <span class="checkmark"></span> Grid
@@ -128,65 +132,77 @@
                     <span class="checkmark"></span> Guias
                 </label>
             </div>
-            <div class="grid" style="margin-top:8px;">
+
+            <div class="input-field" style="margin-top: 8px;">
+                <span>Estilo Preview</span>
                 <select id="preview-style">
-                    <option value="dark">Escuro</option>
-                    <option value="light">Claro</option>
-                    <option value="check">Grid</option>
+                    <option value="dark">Modo Escuro</option>
+                    <option value="light">Modo Claro</option>
+                    <option value="check">Xadrez (Transp.)</option>
                 </select>
             </div>
-            <div class="input-field compact" style="margin-top:8px;">
-                <span>Zoom: <span id="work-zoom-val">100</span>%</span>
+
+            <div class="input-field compact" style="margin-top: 8px;">
+                <span>Zoom Editor: <span id="work-zoom-val">100</span>%</span>
                 <input type="range" id="work-zoom" min="50" max="800" value="100" step="10">
             </div>
         </div>
 
         <div class="tool-group">
-            <label>Camadas</label>
+            <label>Gestão de Camadas</label>
             <div id="layers-list" class="layers-list" style="max-height: 150px; overflow-y: auto;"></div>
-            <div style="display: flex; gap:5px; margin-top: 5px; flex-wrap: wrap;">
-                <button id="btn-add-layer" class="secondary-btn small-btn" style="flex:1; min-width: 80px;"><i data-lucide="plus"></i> Camada</button>
-                <button id="btn-merge-layers" class="secondary-btn small-btn" title="Achatar"><i data-lucide="layers"></i></button>
+            <div class="action-row" style="margin-top: 8px;">
+                <button id="btn-add-layer" class="secondary-btn small-btn"><i data-lucide="plus"></i> Camada</button>
+                <button id="btn-merge-layers" class="secondary-btn small-btn" title="Achatar CamadasVisíveis"><i data-lucide="layers"></i></button>
             </div>
         </div>
 
         <div class="tool-group">
-            <label>Componentes/UI</label>
-            <div class="grid">
-                <button id="add-ui-slider" class="secondary-btn small-btn"><i data-lucide="sliders"></i> Slider</button>
-                <button id="add-ui-switch" class="secondary-btn small-btn"><i data-lucide="toggle-left"></i> Switch</button>
-                <button id="add-ui-bar" class="secondary-btn small-btn"><i data-lucide="loader"></i> Bar</button>
+            <label>Live Code (C++)</label>
+            <div class="code-preview-panel">
+                <div class="proto-workspace-header" style="height: 32px; padding: 0 0.75rem !important;">
+                     <div class="status-badge badge-cpp" style="background: #4ade80; color: #000; font-size: 0.55rem; padding: 1px 4px;">C++ PREVIEW</div>
+                </div>
+                <div id="live-code-preview" style="background: #000; padding: 10px; border-radius: 0 0 8px 8px; max-height: 250px; font-size: 0.7rem;">// PixelDisplay240 V5
+// Desenhe para ver o código...</div>
             </div>
-            <div id="prop-panel" class="hint" style="margin-top:8px;">Propriedades</div>
         </div>
 
         <div class="tool-group">
             <label>Config Projeto</label>
-            <div class="input-field"><span>Nome Sprite</span><input type="text" id="array-name" value="image_01"></div>
-            <div class="grid" style="margin-top:8px;">
-                <div class="input-field"><span>W</span><input type="number" id="canvas-width" value="240"></div>
-                <div class="input-field"><span>H</span><input type="number" id="canvas-height" value="240"></div>
-            </div>
-            <div class="input-field"><span>Fundo</span><input type="color" id="bg-color-picker" value="#000000"></div>
             <div class="input-field">
-                <span>Formato</span>
+                <span>Nome do Array (C++)</span>
+                <input type="text" id="array-name" value="image_01">
+            </div>
+            <div class="action-row">
+                <div class="input-field"><span>Largura</span><input type="number" id="canvas-width" value="240"></div>
+                <div class="input-field"><span>Altura</span><input type="number" id="canvas-height" value="240"></div>
+            </div>
+            <div class="input-field">
+                <span>Cor de Fundo</span>
+                <input type="color" id="bg-color-picker" value="#000000">
+            </div>
+            <div class="input-field">
+                <span>Formato de Saída</span>
                 <select id="export-format">
-                    <option value="jpeg">Imagem JPEG (.jpg)</option>
-                    <option value="rgb565">RGB565 (C Array)</option>
-                    <option value="rgb888">RGB888 (C Array)</option>
-                    <option value="rle565">RGB565 + RLE (C Array)</option>
+                    <option value="jpeg">JPEG (.jpg)</option>
+                    <option value="rgb565">RGB565 (Default)</option>
+                    <option value="rgb888">RGB888 (High Quality)</option>
+                    <option value="rle565">RGB565 + RLE (Compresso)</option>
                 </select>
             </div>
         </div>
 
         <div class="tool-group">
             <label>Coleção & Animação</label>
-            <div id="sprite-list" class="sprite-list"></div>
-            <div style="display: flex; gap:5px; margin-top:8px; flex-wrap: wrap;">
-                <button id="btn-add-collection" class="secondary-btn small-btn" style="flex:1; min-width: 80px;" title="Adicionar Design Atual à Coleção">📦 Col.</button>
-                <button id="btn-play-anim" class="secondary-btn small-btn" title="Tocar Animação">▶️</button>
+            <div id="sprite-list" class="layers-list" style="max-height: 120px; overflow-y: auto; margin-bottom: 8px;"></div>
+            <div class="action-row">
+                <button id="btn-add-collection" class="secondary-btn small-btn" title="Adicionar frame"><i data-lucide="package"></i> Col.</button>
+                <button id="btn-play-anim" class="secondary-btn small-btn" title="Tocar Sequência"><i data-lucide="play"></i></button>
             </div>
-            <button id="btn-export-collection" class="primary-btn small-btn" style="width:100%; margin-top: 8px;"><i data-lucide="download"></i> Exportar Coleção (.h)</button>
+            <button id="btn-export-collection" class="primary-btn small-btn" style="width: 100%; margin-top: 8px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-weight: 800;">
+                <i data-lucide="download-cloud"></i> Exportar Tudo (.h)
+            </button>
         </div>
     </aside>
 </div>
