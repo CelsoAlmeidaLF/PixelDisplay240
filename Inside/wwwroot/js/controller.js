@@ -354,6 +354,62 @@ class PrototypeController {
                 this.view.setSyncStatus('error');
             }
         };
+
+        // 📁 PROJECT LIFECYCLE CALLBACKS
+        this.view.onProjectNew = () => {
+            const defaultProject = {
+                screens: [{ id: 'screen_default', name: 'Main', elements: [] }],
+                assets: [],
+                activeScreenId: 'screen_default',
+                screenSeq: 1,
+                elementSeq: 1
+            };
+            this.model.updateFromData(defaultProject);
+            this.view.render(this.model);
+            this.view.updateCodeValue("");
+            this.queueSave();
+        };
+
+        this.view.onProjectOpen = (projectData) => {
+            this.model.updateFromData(projectData);
+            this.view.render(this.model);
+            this.view.renderCodePreview(this.model);
+            this.queueSave();
+            if (this.app?.toast) this.app.toast.show('success', 'Projeto Aberto', 'O arquivo foi carregado com sucesso.');
+        };
+
+        this.view.onProjectSave = () => {
+            const data = JSON.stringify(this.model.getRawData(), null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `PixelDisplay240_Project_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        this.view.onProjectExportHardware = async () => {
+            this.view.setSyncStatus('saving');
+            try {
+                const resp = await fetch('/api/prototype/export', {
+                    headers: { 'Authorization': `Bearer ${this.app.api.token}` }
+                });
+                if (!resp.ok) throw new Error("Falha na exportação");
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "PixelDisplay240_Project.zip";
+                a.click();
+                URL.revokeObjectURL(url);
+                this.view.setSyncStatus('synced');
+            } catch (err) {
+                console.error("Export failed:", err);
+                alert("Erro ao exportar projeto para hardware.");
+                this.view.setSyncStatus('error');
+            }
+        };
     }
 
     /**

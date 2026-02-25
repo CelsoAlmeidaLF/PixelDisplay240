@@ -32,15 +32,24 @@
         </div>
 
         <div class="tool-group">
-            <label>Transferência</label>
-            <div class="action-row">
-                <button id="btn-upload-image" class="secondary-btn small-btn" style="flex: 1;">
-                    <i data-lucide="image"></i> Imagem
+            <label>Projeto</label>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
+                <button id="btn-project-new" class="secondary-btn small-btn" title="Novo Projeto">
+                    <i data-lucide="file-plus"></i> Novo
                 </button>
-                <button id="btn-import-design" class="primary-btn small-btn" style="flex: 1.5; font-weight: 800;">
-                    <i data-lucide="download-cloud"></i> Baixar
+                <button id="btn-project-open" class="secondary-btn small-btn" title="Abrir Projeto">
+                    <i data-lucide="folder-open"></i> Abrir
                 </button>
             </div>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 4px;">
+                <button id="btn-project-save" class="primary-btn small-btn" title="Salvar no PC (JSON)">
+                    <i data-lucide="download"></i> Salvar
+                </button>
+                <button id="btn-project-export" class="primary-btn small-btn" style="background: var(--success);" title="Exportar para Arduino/Hardware">
+                    <i data-lucide="cpu"></i> Hardware
+                </button>
+            </div>
+            <input type="file" id="proto-project-upload" accept=".json" style="display:none;">
             <input type="file" id="proto-image-upload" accept="image/*" style="display:none;">
         </div>
 

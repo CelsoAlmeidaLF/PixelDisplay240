@@ -19,6 +19,7 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 builder.Services.AddSingleton<AgentConfigService>();
 builder.Services.AddSingleton<LogService>();
 builder.Services.AddSingleton<PrototypeService>();
+builder.Services.AddSingleton<HardwareExportService>();
 builder.Services.AddHttpClient<AIService>();
 builder.Services.AddAuthorization();
 builder.Services.AddRazorPages();
@@ -198,6 +199,12 @@ api.MapPost("/prototype/save", async (HttpRequest request, PrototypeService serv
     } catch (Exception e) {
         return Results.Problem(e.Message);
     }
+});
+
+api.MapGet("/prototype/export", (HardwareExportService exportService, PrototypeService service) => {
+    var project = service.GetProject();
+    var zipBytes = exportService.GenerateProjectZip(project);
+    return Results.File(zipBytes, "application/zip", "PixelDisplay240_Project.zip");
 });
 
 app.Run();

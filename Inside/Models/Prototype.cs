@@ -56,5 +56,6 @@ namespace PixelDisplay240Api.Models
         public int Width { get; set; } = 240;
         public int Height { get; set; } = 240;
         public string Kind { get; set; } = "image";
+        public string StorageType { get; set; } = "flash"; // "flash" (PROGMEM) or "littlefs"
     }
 }

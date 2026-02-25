@@ -189,6 +189,41 @@ class PrototypeView {
                 }
             };
         }
+
+        // 📁 PROJECT MANAGEMENT BUTTONS
+        const btnNew = document.getElementById('btn-project-new');
+        const btnOpen = document.getElementById('btn-project-open');
+        const btnSave = document.getElementById('btn-project-save');
+        const btnExport = document.getElementById('btn-project-export');
+        const fileOpen = document.getElementById('proto-project-upload');
+
+        if (btnNew) btnNew.onclick = () => {
+            if (confirm("Deseja criar um NOVO projeto? Todas as alterações não salvas serão perdidas.")) {
+                this.onProjectNew?.();
+            }
+        };
+
+        if (btnOpen && fileOpen) {
+            btnOpen.onclick = () => fileOpen.click();
+            fileOpen.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const project = JSON.parse(ev.target.result);
+                        this.onProjectOpen?.(project);
+                        fileOpen.value = '';
+                    } catch (err) {
+                        alert("Erro ao ler o arquivo de projeto JSON.");
+                    }
+                };
+                reader.readAsText(file);
+            };
+        }
+
+        if (btnSave) btnSave.onclick = () => this.onProjectSave?.();
+        if (btnExport) btnExport.onclick = () => this.onProjectExportHardware?.();
     }
 
     /** Handle JPG/BMP/PNG imported from disk → set as screen background */
