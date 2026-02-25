@@ -962,6 +962,7 @@ class PixelDisplay240App extends EditorModule {
                 if (k === 'font-gen') { this.toast.show('success', 'Font Generator', 'Recurso de exportação de fonte ativado.'); }
             };
         });
+
         const aiBtn = this.dom('tool-ai-gen');
         if (aiBtn) aiBtn.onclick = () => { this.dom('ai-modal').style.display = 'flex'; if (typeof lucide !== 'undefined') lucide.createIcons(); };
         document.querySelectorAll('textarea').forEach(tx => {
@@ -1287,6 +1288,7 @@ if (typeof AIPixelArtGenerator !== 'undefined') {
     window.generateAIPixelArt = () => app.ai.generate();
     window.applyAIToCanvas = () => app.ai.apply();
 }
+
 
 window.app = app;
 window.exportErrorLog = () => app.logger.exportLogs();
