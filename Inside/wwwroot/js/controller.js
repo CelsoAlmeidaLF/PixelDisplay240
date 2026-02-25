@@ -26,22 +26,26 @@ class PrototypeController {
         if (!this.app || !this.app.api) return;
         this.view.setSyncStatus('saving');
         try {
-            // Fetch project structure
             const resp = await this.app.api.request('/api/prototype');
             const data = await resp.json();
-            this.model.updateFromData(data);
 
-            this.view.render(this.model);
+            // Só atualiza o modelo se NÃO estiver editando ativamente via código (evita revert/undo)
+            const isEditing = this.view.editor && (this.view.editor.hasTextFocus() || this.view.editor.hasWidgetFocus());
+            if (!isEditing) {
+                this.model.updateFromData(data);
+                this.view.render(this.model);
+                this.view.renderCodePreview(this.model);
+            }
+
             this.view.setSyncStatus('synced');
         } catch (err) {
             console.error('Sync failed:', err);
-            this.view.setSyncStatus('local'); // Trabalhando com cache local
+            this.view.setSyncStatus('local');
         }
     }
 
     async callApi(path, method = 'POST', body = null) {
         // Obsoleto: Substituído por queueSave() para salvamento integral.
-        // Mantido apenas para compatibilidade temporária se necessário.
         return this.queueSave();
     }
 
@@ -65,9 +69,16 @@ class PrototypeController {
                 });
                 if (resp.ok) {
                     const data = await resp.json();
-                    // Atualiza IDs gerados pelo server ou sequenciadores
-                    this.model.updateFromData(data);
-                    this.view.render(this.model);
+
+                    // PROTEÇÃO CRÍTICA: Se o usuário estiver editando, não sobrescreve o modelo local 
+                    // com o retorno do servidor, pois o servidor pode devolver estado antigo enquanto o save processa.
+                    const isEditing = this.view.editor && (this.view.editor.hasTextFocus() || this.view.editor.hasWidgetFocus());
+                    if (!isEditing) {
+                        this.model.updateFromData(data);
+                        this.view.render(this.model);
+                        this.view.renderCodePreview(this.model);
+                    }
+
                     this.view.setSyncStatus('synced');
                 } else {
                     throw new Error('Server error on save');
@@ -85,9 +96,48 @@ class PrototypeController {
             const id = `screen_${Date.now()}`;
             const newScreen = {
                 id,
-                name: `Tela_${this.model.screens.length + 1}`,
+                name: `${template ? template.charAt(0).toUpperCase() + template.slice(1) : 'Tela'}_${this.model.screens.length + 1}`,
                 elements: []
             };
+
+            // Aplica elementos iniciais baseados no template
+            if (template === 'dashboard') {
+                newScreen.elements = [
+                    { id: `el_${Date.now()}_1`, type: 'fillRect', name: 'Header', x: 0, y: 0, w: 240, h: 30, color: '#1e293b' },
+                    { id: `el_${Date.now()}_2`, type: 'drawCentreString', name: 'CPU: 45%', x: 120, y: 8, w: 0, h: 0, color: '#38bdf8', valueBind: 'cpu_usage' },
+                    { id: `el_${Date.now()}_3`, type: 'fillCircle', name: 'Status_OK', x: 190, y: 15, w: 10, h: 10, color: '#4ade80' },
+                    { id: `el_${Date.now()}_4`, type: 'fillRect', name: 'ChartArea', x: 20, y: 60, w: 200, h: 120, color: '#0f172a' },
+                    { id: `el_${Date.now()}_5`, type: 'drawLine', name: 'GraphLine', x: 20, y: 180, w: 200, h: -80, color: '#38bdf8' }
+                ];
+            } else if (template === 'menu') {
+                newScreen.elements = [
+                    { id: `el_${Date.now()}_1`, type: 'drawCentreString', name: 'MENU PRINCIPAL', x: 120, y: 20, w: 0, h: 0, color: '#f8fafc' },
+                    { id: `el_${Date.now()}_2`, type: 'fillRoundRect', name: 'Opt_1', x: 40, y: 60, w: 160, h: 35, color: '#334155' },
+                    { id: `el_${Date.now()}_3`, type: 'drawString', name: 'Configurações', x: 60, y: 70, w: 0, h: 0, color: '#fff' },
+                    { id: `el_${Date.now()}_4`, type: 'fillRoundRect', name: 'Opt_2', x: 40, y: 105, w: 160, h: 35, color: '#334155' },
+                    { id: `el_${Date.now()}_5`, type: 'drawString', name: 'Sensores', x: 60, y: 115, w: 0, h: 0, color: '#fff' },
+                    { id: `el_${Date.now()}_6`, type: 'fillRoundRect', name: 'Opt_3', x: 40, y: 150, w: 160, h: 35, color: '#334155' },
+                    { id: `el_${Date.now()}_7`, type: 'drawString', name: 'Sair', x: 60, y: 160, w: 0, h: 0, color: '#fff' }
+                ];
+            } else if (template === 'loading') {
+                newScreen.elements = [
+                    { id: `el_${Date.now()}_1`, type: 'drawCentreString', name: 'LOADING...', x: 120, y: 100, w: 0, h: 0, color: '#38bdf8' },
+                    { id: `el_${Date.now()}_2`, type: 'drawRect', name: 'ProgressBorder', x: 40, y: 130, w: 160, h: 10, color: '#475569' },
+                    { id: `el_${Date.now()}_3`, type: 'fillRect', name: 'ProgressBar', x: 42, y: 132, w: 80, h: 6, color: '#38bdf8', wBind: 'loading_progress' }
+                ];
+            } else if (template === 'clock') {
+                newScreen.elements = [
+                    { id: `el_${Date.now()}_1`, type: 'drawCircle', name: 'ClockFace', x: 120, y: 120, w: 200, h: 200, color: '#1e293b' },
+                    { id: `el_${Date.now()}_2`, type: 'drawCentreString', name: '12:45', x: 120, y: 90, w: 0, h: 0, color: '#fff', valueBind: 'current_time' },
+                    { id: `el_${Date.now()}_3`, type: 'drawCentreString', name: 'Quarta, 25 Fev', x: 120, y: 140, w: 0, h: 0, color: '#475569', valueBind: 'current_date' }
+                ];
+            } else if (template === 'others') {
+                newScreen.elements = [
+                    { id: `el_${Date.now()}_1`, type: 'fillTriangle', name: 'Decor_1', x: 20, y: 20, w: 100, h: 100, color: '#6366f1' },
+                    { id: `el_${Date.now()}_2`, type: 'fillEllipse', name: 'Decor_2', x: 120, y: 120, w: 80, h: 40, color: '#a855f7' },
+                    { id: `el_${Date.now()}_3`, type: 'drawPixel', name: 'Star', x: 200, y: 50, w: 0, h: 0, color: '#fbbf24' }
+                ];
+            }
             this.model.screens.push(newScreen);
             this.model.activeScreenId = id;
             this.queueSave();
@@ -210,13 +260,21 @@ class PrototypeController {
             // 2. Persist to backend
             if (prop === 'backgroundAsset') {
                 const asset = this.model.assets.find(a => a.name === val);
-                await this.callApi('/screen/background', 'POST', {
-                    screenId: screenId,
-                    assetName: val,
-                    dataUrl: asset ? asset.dataUrl : null
+                await this.app.api.request('/api/prototype/screen/background', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        screenId: screenId,
+                        assetName: val,
+                        dataUrl: asset ? asset.dataUrl : null
+                    })
                 });
             } else {
-                await this.callApi('/screen/update', 'POST', { screenId, [prop]: val });
+                await this.app.api.request('/api/prototype/screen/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ screenId, [prop]: val })
+                });
             }
 
             // 3. Sync code
@@ -246,10 +304,14 @@ class PrototypeController {
         this.view.onImportBackground = async (dataUrl, sourceName) => {
             const activeId = this.model.activeScreenId;
             if (!activeId) return;
-            await this.callApi('/screen/background', 'POST', {
-                screenId: activeId,
-                assetName: null,
-                dataUrl: dataUrl
+            await this.app.api.request('/api/prototype/screen/background', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    screenId: activeId,
+                    assetName: null,
+                    dataUrl: dataUrl
+                })
             });
         };
 
@@ -282,10 +344,7 @@ class PrototypeController {
                 }
 
                 const optimizedElements = await resp.json();
-                
-                // Update elements in model (careful to maintain internal state if needed, but here simple replacement is ok)
                 screen.elements = optimizedElements;
-                
                 this.view._codeEditedManually = false;
                 this.queueSave();
                 this.view.setSyncStatus('synced');
@@ -299,155 +358,121 @@ class PrototypeController {
 
     /**
      * Bidirectional sync: parse C++ code → update model elements.
-     * Rewritten to be non-destructive. It tries to match elements by type and order.
-     * New elements are created, existing ones updated.
-     * UNMATCHED elements in the code are assumed to be new and added.
-     * UNMATCHED elements in the model are NOT deleted to avoid accidental loss of unparseable items.
      */
     _syncCodeToModel(code) {
-        // Debounce actual sync to avoid rapid API calls while typing
         if (this._syncTimer) clearTimeout(this._syncTimer);
         this._syncTimer = setTimeout(async () => {
             if (this._isSyncingOrder || this._isReordering) return;
             await this._doSyncCodeToModel(code);
-        }, 800);
+        }, 50);
     }
 
+    /**
+     * ATOMIC SYNC: Processa todas as telas e elementos globalmente.
+     */
     async _doSyncCodeToModel(code) {
-        // 1. Sync Screen Order
         const parsedScreenOrder = this.view._parseScreenOrderFromCode(code);
-        let orderChanged = false;
+        let modelChanged = false;
 
-        if (parsedScreenOrder.length > 0) {
-            for (let i = 0; i < parsedScreenOrder.length; i++) {
-                const cleanName = parsedScreenOrder[i];
-                const modelScreen = this.model.screens[i];
-                if (!modelScreen || this.view._cleanName(modelScreen.name) !== cleanName) {
-                    // Find where this screen is now
-                    const actualScreen = this.model.screens.find(s => this.view._cleanName(s.name) === cleanName);
-                    if (actualScreen) {
-                        this._isSyncingOrder = true;
-                        console.log(`[Controller] Sincronizando ordem da tela localmente: ${actualScreen.name} para o índice ${i}`);
+        // 1. Sincroniza ESTRUTURA de Telas (Criação, Remoção e Reordenação)
+        for (let i = 0; i < parsedScreenOrder.length; i++) {
+            const cleanName = parsedScreenOrder[i];
+            const actualScreen = this.model.screens.find(s => this.view._cleanName(s.name) === cleanName);
 
-                        // Reorder locally
-                        const idx = this.model.screens.findIndex(s => s.id === actualScreen.id);
-                        this.model.screens.splice(idx, 1);
-                        this.model.screens.splice(i, 0, actualScreen);
-
-                        this.queueSave();
-                        orderChanged = true;
-                        this._isSyncingOrder = false;
-                        break;
-                    }
-                }
-            }
-        }
-        if (orderChanged) return;
-
-        const screen = this.model.activeScreen;
-        if (!screen) return;
-
-        const fnName = (screen.name || 'Screen')
-            .replace(/\s+/g, '_')
-            .replace(/[^a-zA-Z0-9_]/g, '');
-
-        const parsedElements = this.view._parseElementsFromCode(code, fnName);
-        if (!parsedElements) return;
-
-        // Group parsed elements to match
-        const modelElements = [...screen.elements];
-        const matchedIds = new Set();
-        const finalOrderIds = [];
-
-        // 2. Map parsed elements to model elements
-        for (const p of parsedElements) {
-            let match = modelElements.find(el =>
-                !matchedIds.has(el.id) &&
-                el.type === p.type &&
-                (p.name ? el.name === p.name : true)
-            );
-
-            if (!match) {
-                match = modelElements.find(el => !matchedIds.has(el.id) && el.type === p.type);
-            }
-
-            if (match) {
-                matchedIds.add(match.id);
-                finalOrderIds.push(match.id);
-
-                const c1 = this.view.hexTo565(match.color || '#000000');
-                const c2 = this.view.hexTo565(p.color || '#000000');
-
-                if (match.x !== p.x || match.y !== p.y || match.w !== p.w || match.h !== p.h ||
-                    c1 !== c2 || (p.name && match.name !== p.name) || match.asset !== p.asset) {
-
-                    match.x = p.x; match.y = p.y; match.w = p.w; match.h = p.h;
-                    match.color = p.color;
-                    match.name = p.name;
-                    match.asset = p.asset;
-                    this.queueSave();
-                }
+            if (!actualScreen) {
+                console.log(`[Controller] Criando nova tela via código: draw_${cleanName}`);
+                const newId = `screen_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                this.model.screens.splice(i, 0, { id: newId, name: cleanName, elements: [] });
+                if (i === 0 && !this.model.activeScreenId) this.model.activeScreenId = newId;
+                modelChanged = true;
             } else {
-                const elId = `el_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-                const newEl = {
-                    id: elId,
-                    type: p.type,
-                    name: p.name || `${p.type}_${screen.elements.length + 1}`,
-                    x: p.x, y: p.y, w: p.w, h: p.h,
-                    color: p.color,
-                    asset: p.asset
-                };
-                screen.elements.push(newEl);
-                finalOrderIds.push(elId);
-                this.queueSave();
+                const currentIndex = this.model.screens.indexOf(actualScreen);
+                if (currentIndex !== i) {
+                    this.model.screens.splice(currentIndex, 1);
+                    this.model.screens.splice(i, 0, actualScreen);
+                    modelChanged = true;
+                }
             }
         }
 
-        // 3. Handle deletions local
-        const oldLen = screen.elements.length;
-        screen.elements = screen.elements.filter(el => matchedIds.has(el.id));
-        if (screen.elements.length !== oldLen) this.queueSave();
+        const oldScreenCount = this.model.screens.length;
+        this.model.screens = this.model.screens.filter(s => parsedScreenOrder.includes(this.view._cleanName(s.name)));
+        if (this.model.screens.length !== oldScreenCount) {
+            modelChanged = true;
+            if (!this.model.activeScreenId || !this.model.screens.find(s => s.id === this.model.activeScreenId)) {
+                this.model.activeScreenId = this.model.screens[0]?.id;
+            }
+        }
 
-        // 4. FIX ORDER local
-        this._isSyncingOrder = true;
-        try {
-            let localOrderChanged = false;
-            for (let i = 0; i < finalOrderIds.length; i++) {
-                const desiredId = finalOrderIds[i];
-                const currentIndex = screen.elements.findIndex(el => el.id === desiredId);
+        // 2. Sincroniza ELEMENTOS de todas as telas detectadas
+        for (const screen of this.model.screens) {
+            const fnName = this.view._cleanName(screen.name);
+            const parsedElements = this.view._parseElementsFromCode(code, fnName);
+            if (!parsedElements) continue;
+
+            const matchedIds = new Set();
+            const finalOrder = [];
+
+            for (const p of parsedElements) {
+                let match = screen.elements.find(el =>
+                    !matchedIds.has(el.id) && el.type === p.type && (p.name ? el.name === p.name : true)
+                );
+                if (!match) match = screen.elements.find(el => !matchedIds.has(el.id) && el.type === p.type);
+
+                if (match) {
+                    matchedIds.add(match.id);
+                    finalOrder.push(match.id);
+                    if (match.x !== p.x || match.y !== p.y || match.w !== p.w || match.h !== p.h ||
+                        match.color !== p.color || (p.name && match.name !== p.name) || match.asset !== p.asset) {
+
+                        Object.assign(match, p);
+                        modelChanged = true;
+                    }
+                } else {
+                    const elId = `el_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                    screen.elements.push({ id: elId, ...p });
+                    matchedIds.add(elId);
+                    finalOrder.push(elId);
+                    modelChanged = true;
+                }
+            }
+
+            const oldElCount = screen.elements.length;
+            screen.elements = screen.elements.filter(el => matchedIds.has(el.id));
+            if (screen.elements.length !== oldElCount) modelChanged = true;
+
+            for (let i = 0; i < finalOrder.length; i++) {
+                const elId = finalOrder[i];
+                const currentIndex = screen.elements.findIndex(el => el.id === elId);
                 if (currentIndex !== -1 && currentIndex !== i) {
                     const el = screen.elements.splice(currentIndex, 1)[0];
                     screen.elements.splice(i, 0, el);
-                    localOrderChanged = true;
+                    modelChanged = true;
                 }
             }
-            if (localOrderChanged) this.queueSave();
-        } finally {
-            this._isSyncingOrder = false;
+        }
+
+        if (modelChanged) {
+            this.queueSave();
         }
     }
 
     handleMouseDown(e) {
-        // Calculate scale factor between visual canvas (likely scaled by CSS) and internal resolution (240x240)
         const rect = e.target.getBoundingClientRect();
         const scaleX = 240 / rect.width;
         const scaleY = 240 / rect.height;
-
         const x = (e.clientX - rect.left) * scaleX;
         const y = (e.clientY - rect.top) * scaleY;
 
         const screen = this.model.activeScreen;
         if (!screen) return;
 
-        // Check for resize handle on selected element first
         if (this.model.selectedElementId) {
             const el = screen.elements.find(e => e.id === this.model.selectedElementId);
             if (el) {
-                // Bottom-right corner handle area (10x10)
-                if (x >= el.x + el.w - 10 && x <= el.x + el.w + 5 &&
-                    y >= el.y + el.h - 10 && y <= el.y + el.h + 5) {
+                if (x >= el.x + el.w - 10 && x <= el.x + el.w + 5 && y >= el.y + el.h - 10 && y <= el.y + el.h + 5) {
                     this.resizingElement = el;
-                    this.draggingElement = null; // Ensure we don't drag
+                    this.draggingElement = null;
                     return;
                 }
             }
@@ -455,8 +480,6 @@ class PrototypeController {
 
         this.draggingElement = null;
         this.resizingElement = null;
-
-        // Find element under mouse for dragging
         for (let i = screen.elements.length - 1; i >= 0; i--) {
             const el = screen.elements[i];
             if (x >= el.x && x <= el.x + el.w && y >= el.y && y <= el.y + el.h) {
@@ -466,40 +489,26 @@ class PrototypeController {
                 break;
             }
         }
-
-        if (!this.draggingElement && !this.resizingElement) {
-            this.view.onSelectElement(null);
-        }
+        if (!this.draggingElement && !this.resizingElement) this.view.onSelectElement(null);
     }
 
     handleMouseMove(e) {
         if (!this.draggingElement && !this.resizingElement) return;
-
         const rect = e.target.getBoundingClientRect();
-        // Calculate scale factor once here too
         const scaleX = 240 / rect.width;
         const scaleY = 240 / rect.height;
-
         const currentX = (e.clientX - rect.left) * scaleX;
         const currentY = (e.clientY - rect.top) * scaleY;
 
         if (this.resizingElement) {
-            // Calculate new width/height, minimum 5px
-            const newW = Math.max(5, currentX - this.resizingElement.x);
-            const newH = Math.max(5, currentY - this.resizingElement.y);
-
-            this.resizingElement.w = Math.round(newW);
-            this.resizingElement.h = Math.round(newH);
+            this.resizingElement.w = Math.round(Math.max(5, currentX - this.resizingElement.x));
+            this.resizingElement.h = Math.round(Math.max(5, currentY - this.resizingElement.y));
             this.view.render(this.model);
             return;
         }
-
         if (this.draggingElement) {
-            const x = Math.round(currentX - this.dragOffset.x);
-            const y = Math.round(currentY - this.dragOffset.y);
-
-            this.draggingElement.x = x;
-            this.draggingElement.y = y;
+            this.draggingElement.x = Math.round(currentX - this.dragOffset.x);
+            this.draggingElement.y = Math.round(currentY - this.dragOffset.y);
             this.view.render(this.model);
         }
     }
@@ -513,11 +522,7 @@ class PrototypeController {
     }
 
     async importFromCollection(dataUrl) {
-        this.model.assets.push({
-            name: `Design_${Date.now()}`,
-            dataUrl: dataUrl,
-            kind: 'image'
-        });
+        this.model.assets.push({ name: `Design_${Date.now()}`, dataUrl: dataUrl, kind: 'image' });
         this.queueSave();
     }
 

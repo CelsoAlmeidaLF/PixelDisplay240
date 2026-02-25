@@ -39,7 +39,7 @@ class PrototypeView {
                 clearTimeout(this._codeSyncTimer);
                 this._codeSyncTimer = setTimeout(() => {
                     this.onCodeChanged?.(code);
-                }, 800);
+                }, 250);
             };
         }
 
@@ -105,7 +105,7 @@ class PrototypeView {
                 clearTimeout(this._codeSyncTimer);
                 this._codeSyncTimer = setTimeout(() => {
                     this.onCodeChanged?.(code);
-                }, 800);
+                }, 250);
             });
         });
     }
@@ -627,9 +627,14 @@ class PrototypeView {
     renderCodePreview(model) {
         if (!this.dom.codePreview) return;
 
-        // Só pulamos a atualização se o usuário estiver editando o código manualmente E o editor tiver foco.
-        // Se a mudança veio da UI (drag n drop), _codeEditedManually será false e devemos atualizar.
-        if (this._codeEditedManually && document.activeElement === this.dom.codePreview) return;
+        // Só pulamos a atualização automática se o editor estiver com foco real (digitando).
+        // Se o editor NÃO tiver foco, significa que a mudança veio de uma ação na UI (drag, property change),
+        // e devemos atualizar o código para refletir a nova posição/valor.
+        const isEditorFocused = this.editor && (this.editor.hasTextFocus() || this.editor.hasWidgetFocus());
+        if (isEditorFocused) return;
+
+        // Mantém track de que a edição via UI não deve disparar parser de volta por enquanto
+        this._isUpdatingFromUI = true;
 
         // Capture existing custom code from current value before regenerating
         const currentCode = this.dom.codePreview.value;
@@ -822,7 +827,9 @@ class PrototypeView {
      */
     _parseElementsFromCode(code, fnName) {
         const elements = [];
-        // Extract just the body of the active screen function
+        this._lastParsedColor = '#ffffff'; // Reset state per function
+        this._lastParsedSize = 16;
+
         const fnRe = new RegExp(`void\\s+draw_${fnName}\\s*\\([^)]*\\)\\s*\\{([\\s\\S]*?)\\}`);
         const fnMatch = code.match(fnRe);
         const body = fnMatch ? fnMatch[1] : code;
@@ -837,12 +844,14 @@ class PrototypeView {
             const commentMatch = trimmed.match(/\/\/\s*(.*)$/);
             if (commentMatch) name = commentMatch[1].trim();
 
-            // Helper to parse color
-            const parseColor = (val) => this._rgb565ToHex(parseInt(val, val.startsWith('0x') || val.startsWith('0X') ? 16 : 10));
+            const parseColor = (val) => {
+                const cleanVal = val.trim();
+                if (this._tftColors[cleanVal] !== undefined) return this._rgb565ToHex(this._tftColors[cleanVal]);
+                return this._rgb565ToHex(parseInt(cleanVal, cleanVal.startsWith('0x') || cleanVal.startsWith('0X') ? 16 : 10));
+            };
 
             // 1. Rects (fill/draw)
-            // tft.fillRect(x, y, w, h, color)
-            const rectM = trimmed.match(/tft\.(fill|draw)Rect\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
+            const rectM = trimmed.match(/tft\.(fill|draw)Rect\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
             if (rectM) {
                 elements.push({
                     type: rectM[1] + 'Rect',
@@ -855,8 +864,7 @@ class PrototypeView {
             }
 
             // 2. Circles (fill/draw)
-            // tft.fillCircle(cx, cy, r, color) -> convert to box x,y,w,h
-            const circM = trimmed.match(/tft\.(fill|draw)Circle\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
+            const circM = trimmed.match(/tft\.(fill|draw)Circle\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
             if (circM) {
                 const cx = parseInt(circM[2]), cy = parseInt(circM[3]), r = parseInt(circM[4]);
                 elements.push({
@@ -869,8 +877,7 @@ class PrototypeView {
             }
 
             // 3. Round Rects
-            // tft.fillRoundRect(x, y, w, h, r, color)
-            const rRectM = trimmed.match(/tft\.(fill|draw)RoundRect\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
+            const rRectM = trimmed.match(/tft\.(fill|draw)RoundRect\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
             if (rRectM) {
                 elements.push({
                     type: rRectM[1] + 'RoundRect',
@@ -883,14 +890,13 @@ class PrototypeView {
             }
 
             // 4. Lines
-            // tft.drawLine(x0, y0, x1, y1, color) -> box x,y,w,h
-            const lineM = trimmed.match(/tft\.drawLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
+            const lineM = trimmed.match(/tft\.drawLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
             if (lineM) {
                 const x0 = parseInt(lineM[1]), y0 = parseInt(lineM[2]);
                 const x1 = parseInt(lineM[3]), y1 = parseInt(lineM[4]);
                 elements.push({
                     type: 'drawLine',
-                    x: x0, y: y0, w: x1 - x0, h: y1 - y0, // Storing delta as w/h for lines
+                    x: x0, y: y0, w: x1 - x0, h: y1 - y0,
                     color: parseColor(lineM[5]),
                     name: name || 'line'
                 });
@@ -898,7 +904,7 @@ class PrototypeView {
             }
 
             // 5. Fast Lines (H/V)
-            const hLineM = trimmed.match(/tft\.drawFastHLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
+            const hLineM = trimmed.match(/tft\.drawFastHLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
             if (hLineM) {
                 elements.push({
                     type: 'drawFastHLine',
@@ -909,7 +915,7 @@ class PrototypeView {
                 });
                 continue;
             }
-            const vLineM = trimmed.match(/tft\.drawFastVLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
+            const vLineM = trimmed.match(/tft\.drawFastVLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
             if (vLineM) {
                 elements.push({
                     type: 'drawFastVLine',
@@ -922,23 +928,22 @@ class PrototypeView {
             }
 
             // 6. Text (drawString / drawCentreString / print / println)
-            const txtM = trimmed.match(/tft\.(drawString|drawCentreString)\s*\(\s*"(.*?)"\s*,\s*(-?\d+)\s*,\s*(-?\d+)(?:\s*,\s*(\d+))?/);
+            const txtM = trimmed.match(/tft\.(drawString|drawCentreString)\s*\(\s*"(.*?)"\s*,\s*(-?\d+)\s*,\s*(-?\d+)(?:\s*,\s*(\d+))?\s*\)/);
             if (txtM) {
                 elements.push({
                     type: txtM[1],
                     x: parseInt(txtM[3]), y: parseInt(txtM[4]),
-                    w: 0, h: 0,
-                    color: '#ffffff', // default, modified by state if we had a full AST
-                    name: txtM[2] // Content
+                    w: 0, h: this._lastParsedSize || 16,
+                    color: this._lastParsedColor || '#ffffff',
+                    name: txtM[2]
                 });
                 continue;
             }
 
             // 7. PushImage (Assets / Backgrounds)
-            const imgM = trimmed.match(/tft\.pushImage\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*([a-zA-Z0-9_]+)/);
+            const imgM = trimmed.match(/tft\.pushImage\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*([a-zA-Z0-9_]+)\s*\)/);
             if (imgM) {
                 const assetName = imgM[5];
-                // Check if this is the screen background
                 if (assetName === `${fnName}_bg`) continue;
 
                 elements.push({
@@ -948,6 +953,20 @@ class PrototypeView {
                     asset: assetName,
                     name: name || assetName
                 });
+                continue;
+            }
+
+            // 8. Text Colors and Settings (Implicit state parsing)
+            const colorM = trimmed.match(/tft\.setTextColor\s*\(\s*([^)]+)\s*\)/);
+            if (colorM) {
+                this._lastParsedColor = parseColor(colorM[1]);
+                continue;
+            }
+
+            const sizeM = trimmed.match(/tft\.setTextSize\s*\(\s*(\d+)\s*\)/);
+            if (sizeM) {
+                this._lastParsedSize = parseInt(sizeM[1]) * 8;
+                continue;
             }
         }
         return elements;
@@ -959,6 +978,7 @@ class PrototypeView {
      */
     _parseScreenOrderFromCode(code) {
         const order = [];
+        // Regex mais flexível para suportar espaços: void [espaços] draw_Nome [espaços] (
         const re = /void\s+draw_([a-zA-Z0-9_]+)\s*\(/g;
         let match;
         while ((match = re.exec(code)) !== null) {
