@@ -1,0 +1,67 @@
+<div id="hardware-view" class="view-panel" style="display: none;">
+    <aside class="toolbar">
+        <div class="tool-group">
+            <label>Configurações de Dispositivo</label>
+            <div class="input-field">
+                <span>Placa</span>
+                <select id="hw-board">
+                    <option value="esp32">ESP32 S3 (240x240)</option>
+                    <option value="esp32-c3">ESP32 C3 (160x128)</option>
+                </select>
+            </div>
+            <div class="input-field">
+                <span>Driver Display</span>
+                <select id="hw-driver">
+                    <option value="st7789">ST7789</option>
+                    <option value="ili9341">ILI9341</option>
+                </select>
+            </div>
+        </div>
+    </aside>
+
+    <section class="editor-area">
+        <div class="proto-workspace-header">
+            <div class="proto-workspace-title-group">
+                <div class="status-badge badge-cpp">HARDWARE MAP</div>
+            </div>
+        </div>
+        <div class="code-editor-main">
+            <div id="hw-map-editor" style="width: 100%; height: 100%;"></div>
+        </div>
+    </section>
+
+    <aside class="sidebar">
+        <div class="tool-group">
+            <label>Pinagem (GPIO)</label>
+            <div id="hw-pins-config" class="proto-scroll-area">
+                <div class="input-field compact">
+                    <span>TFT_CS</span>
+                    <input type="number" value="15" id="pin-cs">
+                </div>
+                <div class="input-field compact">
+                    <span>TFT_DC</span>
+                    <input type="number" value="2" id="pin-dc">
+                </div>
+                <div class="input-field compact">
+                    <span>TFT_RST</span>
+                    <input type="number" value="4" id="pin-rst">
+                </div>
+                <div class="input-field compact">
+                    <span>TFT_MOSI</span>
+                    <input type="number" value="23" id="pin-mosi">
+                </div>
+                <div class="input-field compact">
+                    <span>TFT_SCLK</span>
+                    <input type="number" value="18" id="pin-sclk">
+                </div>
+            </div>
+        </div>
+        <div class="tool-group">
+            <label>Memória</label>
+            <div class="input-field compact">
+                <span>LittleFS Size (MB)</span>
+                <input type="number" value="2" id="hw-fs-size">
+            </div>
+        </div>
+    </aside>
+</div>

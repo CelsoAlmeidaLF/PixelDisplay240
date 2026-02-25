@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - PixelDisplay240 IDE</title>
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+</head>
+<body class="theme-default">
+    <div id="app-loading-overlay">
+        <div class="loader-spinner"></div> 
+        <h2 style="color: white; font-family: 'Outfit'; margin: 0;">PixelDisplay240 IDE</h2>
+        <p id="loading-status" style="color: #64748b; font-family: 'JetBrains Mono'; font-size: 0.8rem; margin-top: 10px;">Carregando módulos...</p>
+    </div>
+
+    <div class="app-container">
+        @RenderBody()
+    </div>
+
+    @* System Orchestrator Logic Inline *@
+    <script>
+        window.PixelDisplay240System = {
+            version: '5.1.0',
+            modules: {},
+            expected: ['model', 'tft', 'view', 'controller', 'designer', 'main'],
+            register: function(id, v) {
+                console.log('[System] Module:', id, v);
+                this.modules[id] = v;
+                this.check();
+            },
+            check: function() {
+                const loaded = Object.keys(this.modules).length;
+                const status = document.getElementById('loading-status');
+                if (status) status.textContent = `Carregando núcleo... (${loaded}/${this.expected.length})`;
+                
+                if (loaded >= this.expected.length) {
+                    const overlay = document.getElementById('app-loading-overlay');
+                    const container = document.querySelector('.app-container');
+                    setTimeout(() => {
+                        if (overlay) overlay.style.opacity = '0';
+                        if (container) container.style.opacity = '1';
+                        setTimeout(() => overlay?.remove(), 500);
+                    }, 500);
+                }
+            }
+        };
+        // Timeout de segurança
+        setTimeout(() => {
+            const status = document.getElementById('loading-status');
+            if (status && status.textContent.includes('Carregando')) {
+                status.innerHTML = '<span style="color:#ef4444">Erro no carregamento.</span><br><small>Verifique o console (F12)</small>';
+            }
+        }, 10000);
+    </script>
+
+    @* Carregamento em Ordem Estrita de Dependência *@
+    <script src="~/js/model.js" asp-append-version="true"></script>
+    <script src="~/js/tft-commands.js" asp-append-version="true"></script>
+    <script src="~/js/view.js" asp-append-version="true"></script>
+    <script src="~/js/controller.js" asp-append-version="true"></script>
+    <script src="~/js/designer.js" asp-append-version="true"></script>
+    <script src="~/js/script.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

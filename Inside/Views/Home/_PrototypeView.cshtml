@@ -1,0 +1,131 @@
+<div id="prototype-view" class="view-panel">
+    <!-- BARRA LATERAL ESQUERDA (Padrão Designer) -->
+    <aside class="toolbar">
+        <div class="tool-group">
+            <label>Comandos TFT</label>
+            <div class="inspector-section-title">Formas</div>
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillRect" title="fillRect"><i data-lucide="square"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawRect" title="drawRect"><i data-lucide="square-dashed"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillRoundRect" title="fillRoundRect"><i data-lucide="square"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillCircle" title="fillCircle"><i data-lucide="circle"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawCircle" title="drawCircle"><i data-lucide="circle-dashed"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillTriangle" title="fillTriangle"><i data-lucide="triangle"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillEllipse" title="fillEllipse"><i data-lucide="ellipsis"></i></button>
+            </div>
+
+            <div class="inspector-section-title">Linhas</div>
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawLine" title="drawLine"><i data-lucide="minus"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawFastHLine" title="drawFastHLine"><i data-lucide="move-horizontal"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawFastVLine" title="drawFastVLine"><i data-lucide="move-vertical"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawPixel" title="drawPixel"><i data-lucide="dot"></i></button>
+            </div>
+
+            <div class="inspector-section-title">Texto & Tela</div>
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 4px;">
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawString" title="drawString"><i data-lucide="type"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="drawCentreString" title="drawCentreString"><i data-lucide="align-center"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="fillScreen" title="fillScreen"><i data-lucide="panel-top"></i></button>
+                <button class="tft-cmd-btn tool-btn" data-cmd="pushImage" title="pushImage"><i data-lucide="image"></i></button>
+            </div>
+        </div>
+
+        <div class="tool-group">
+            <label>Hardware Hub <i data-lucide="external-link" class="popout-btn" title="Abrir no Protótipo" onclick="app.wm.createWindow('hw-config', 'Config Hardware', document.getElementById('hardware-view').querySelector('.sidebar').cloneNode(true), 500, 100, 350, 500)"></i></label>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
+                <button id="btn-project-new" class="secondary-btn small-btn" title="Novo Projeto">
+                    <i data-lucide="file-plus"></i> Novo
+                </button>
+                <button id="btn-project-open" class="secondary-btn small-btn" title="Abrir Projeto">
+                    <i data-lucide="folder-open"></i> Abrir
+                </button>
+            </div>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 4px;">
+                <button id="btn-project-save" class="primary-btn small-btn" title="Salvar no PC (JSON)">
+                    <i data-lucide="download"></i> Salvar
+                </button>
+                <button id="btn-project-export" class="primary-btn small-btn" style="background: var(--success);" title="Exportar para Arduino/Hardware">
+                    <i data-lucide="cpu"></i> Hardware
+                </button>
+            </div>
+            <input type="file" id="proto-project-upload" accept=".json" style="display:none;">
+            <input type="file" id="proto-image-upload" accept="image/*" style="display:none;">
+        </div>
+
+        <div id="screen-list-container" class="tool-group">
+            <label>Telas</label>
+            <div id="screen-list" class="proto-scroll-area"></div>
+            <div class="action-row" style="margin-top: 8px;">
+                <select id="screen-template-select" class="input-field compact" style="flex: 1; height: 28px;">
+                    <option value="">Vazio</option>
+                    <option value="dashboard">Dashboard</option>
+                    <option value="menu">Menu Principal</option>
+                    <option value="loading">Loading...</option>
+                    <option value="clock">Relógio Digital</option>
+                    <option value="others">Outros Layouts</option>
+                </select>
+
+                <button id="btn-auto-layout" class="secondary-btn small-btn" title="Auto-Layout (IA)"><i data-lucide="sparkles"></i></button>
+                <button id="btn-add-screen" class="primary-btn small-btn" style="width: 32px;"><i data-lucide="plus"></i></button>
+            </div>
+        </div>
+
+        <div id="element-list-container" class="tool-group">
+            <label>Elementos</label>
+            <div id="proto-element-list" class="proto-scroll-area"></div>
+        </div>
+    </aside>
+
+    <!-- ÁREA CENTRAL: EDITOR (Padrão Designer) -->
+    <section class="editor-area">
+        <div class="proto-workspace-header">
+            <div class="proto-workspace-title-group">
+                <div class="status-badge badge-cpp">C++ SOURCE</div>
+                <h2 style="font-size: 0.85rem; font-family: 'JetBrains Mono'; color: var(--primary);">pixelstream_v5.ino</h2>
+            </div>
+            <div class="action-row">
+                <button class="secondary-btn small-btn" onclick="
+                    const code = document.getElementById('proto-code-preview').value;
+                    navigator.clipboard.writeText(code);
+                    if(app?.toast) app.toast.show('success','Copiado','');">
+                    <i data-lucide="copy"></i> Copiar
+                </button>
+            </div>
+        </div>
+        <div class="code-editor-main">
+            <div id="proto-code-preview-monaco" style="width: 100%; height: 100%;"></div>
+            <textarea id="proto-code-preview" style="display:none;"></textarea>
+        </div>
+    </section>
+
+    <!-- BARRA LATERAL DIREITA: SIMULAÇÃO (Padrão Designer) -->
+    <aside class="sidebar">
+        <div class="tool-group">
+            <label>Simulação <i data-lucide="external-link" class="popout-btn" title="Destacar Simulador" onclick="app.wm.createWindow('simulator', 'Display Simulator', document.getElementById('proto-canvas').parentElement, 800, 100, 300, 350)"></i></label>
+            <div class="proto-workspace-box">
+                <div class="canvas-mount-small">
+                    <canvas id="proto-canvas" width="240" height="240"></canvas>
+                </div>
+            </div>
+            <div class="action-row">
+                <button id="btn-proto-run" class="primary-btn small-btn" style="flex: 1;"><i data-lucide="play"></i> Iniciar</button>
+                <button id="btn-proto-stop" class="secondary-btn small-btn"><i data-lucide="square"></i></button>
+            </div>
+        </div>
+
+        <div id="properties-container" class="tool-group">
+            <label>Propriedades</label>
+            <div id="proto-interaction-panel" class="proto-scroll-area"></div>
+        </div>
+
+        <div id="gallery-container" class="tool-group">
+            <label>Galeria de Telas</label>
+            <div id="proto-main-container" class="preview-vertical-list proto-scroll-area"></div>
+        </div>
+        
+        <div id="proto-asset-list" style="display:none;"></div>
+    </aside>
+</div>
+
+
