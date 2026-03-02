@@ -1,8 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using PixelDisplay240Api.Models;
 using PixelDisplay240Api.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -33,6 +32,9 @@ builder.Services.AddWebOptimizer(pipeline =>
         "js/view.js", 
         "js/controller.js", 
         "js/designer.js", 
+        "js/hardware.js",
+        "js/system-runtime.js",
+        "js/window-manager.js",
         "js/script.js");
 });
 
@@ -74,6 +76,7 @@ var placeholderRelPath = builder.Configuration.GetValue<string>("AI:PlaceholderP
 var placeholderPath = Path.Combine(contentRoot, placeholderRelPath.Replace('/', Path.DirectorySeparatorChar));
 
 app.MapRazorPages();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -201,11 +204,68 @@ api.MapPost("/prototype/save", async (HttpRequest request, PrototypeService serv
     }
 });
 
+api.MapPost("/prototype/screen/background", async (HttpRequest request, PrototypeService service) => {
+    try {
+        using var doc = await JsonDocument.ParseAsync(request.Body);
+        var root = doc.RootElement;
+        var screenId = root.GetProperty("screenId").GetString();
+        var assetName = root.GetProperty("assetName").GetString();
+        var dataUrl = root.GetProperty("dataUrl").GetString();
+
+        if (string.IsNullOrEmpty(screenId)) return Results.BadRequest("ScreenId required");
+
+        service.UpdateScreenBackground(screenId, assetName, dataUrl);
+        return Results.Ok(new { success = true });
+    } catch (Exception e) {
+        return Results.Problem(e.Message);
+    }
+});
+
+api.MapPost("/prototype/screen/update", async (HttpRequest request, PrototypeService service) => {
+    try {
+        using var doc = await JsonDocument.ParseAsync(request.Body);
+        var root = doc.RootElement;
+        var screenId = root.GetProperty("screenId").GetString();
+        var updates = await request.ReadFromJsonAsync<Dictionary<string, object?>>(jsonOptions);
+
+        if (string.IsNullOrEmpty(screenId) || updates == null) return Results.BadRequest("Invalid data");
+
+        service.UpdateScreen(screenId, updates);
+        return Results.Ok(new { success = true });
+    } catch (Exception e) {
+        return Results.Problem(e.Message);
+    }
+});
+
 api.MapGet("/prototype/export", (HardwareExportService exportService, PrototypeService service) => {
     var project = service.GetProject();
     var zipBytes = exportService.GenerateProjectZip(project);
     return Results.File(zipBytes, "application/zip", "PixelDisplay240_Project.zip");
 });
+
+api.MapGet("/hardware/scan", () => {
+    // Basic mock discovery for now as requested by UI
+    return Results.Ok(new[] { 
+        new { id = "COM3", name = "ESP32 PixelDisplay (COM3)", type = "Serial" },
+        new { id = "192.168.1.100", name = "WiFi Display (192.168.1.100)", type = "Network" }
+    });
+});
+
+api.MapPost("/hardware/export", async (HttpRequest request, HardwareExportService exportService) => {
+    try {
+        var project = await request.ReadFromJsonAsync<PrototypeProject>(jsonOptions);
+        if (project == null) return Results.BadRequest("Invalid project data");
+        var zipBytes = exportService.GenerateProjectZip(project);
+        return Results.File(zipBytes, "application/zip", "PixelDisplay240_Hardware.zip");
+    } catch (Exception e) {
+        return Results.Problem(e.Message);
+    }
+});
+
+// Serve a tiny inline SVG as favicon to avoid 404 noise
+var faviconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%2338bdf8'/><text x='8' y='11' font-size='10' text-anchor='middle' fill='%23000' font-family='Arial'>PD</text></svg>";
+app.MapGet("/favicon.svg", () => Results.Content(faviconSvg, "image/svg+xml"));
+app.MapGet("/favicon.ico", () => Results.Content(faviconSvg, "image/svg+xml"));
 
 app.Run();
 

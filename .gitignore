@@ -77,3 +77,6 @@ yarn-error.log
 # Gemini/AI related
 .gemini/
 agent.json
+
+#Outros
+_[Ff]irmware/

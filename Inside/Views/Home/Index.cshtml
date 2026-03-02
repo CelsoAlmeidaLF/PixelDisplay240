@@ -50,15 +50,16 @@
 </header>
 
 <main id="main-views">
-    @await Html.PartialAsync("_DesignView")
-    @await Html.PartialAsync("_PrototypeView")
-    @await Html.PartialAsync("_HardwareView")
+@await Html.PartialAsync("~/Views/Home/_DesignView.cshtml")
+@await Html.PartialAsync("~/Views/Home/_PrototypeView.cshtml")
+@await Html.PartialAsync("~/Views/Home/_HardwareView.cshtml")
 </main>
 
-@await Html.PartialAsync("_Footer")
-@await Html.PartialAsync("_Modals")
+@await Html.PartialAsync("~/Views/Shared/_Footer.cshtml")
+@await Html.PartialAsync("~/Views/Shared/_Modals.cshtml")
 
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
     <script>
         // Emergency icon reload
         window.addEventListener('load', () => {

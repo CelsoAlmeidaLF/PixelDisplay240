@@ -383,6 +383,8 @@ class LayoutManager extends EditorModule {
         this.rulerV = this.dom('ruler-v');
         this.guides = this.dom('guides-container');
 
+        this.updateRulers(); // Initial render
+        this.renderGrid();   // Initial render
         this._setupEvents();
     }
 
@@ -484,7 +486,6 @@ class LayoutManager extends EditorModule {
     }
 }
 
-
 class AIPixelArtGenerator extends EditorModule {
     constructor(app) {
         super();
@@ -519,7 +520,7 @@ class AIPixelArtGenerator extends EditorModule {
             const img = await this._loadBlobImage(blob);
             this._displayPreview(img);
         } catch (e) {
-            this.app.logger.error('AIGenerator', 'Falha na gerao via Servidor', { prompt, seed, error: e.message });
+            this.app.logger.error('AIGenerator', 'Falha na gera��o via Servidor', { prompt, seed, error: e.message });
             const msg = e.message.includes('Quota exceeded')
                 ? 'Quota de imagens excedida. Verifique seu plano/billing.'
                 : 'Falha ao gerar imagem pelo servidor principal.';
@@ -560,7 +561,7 @@ class AIPixelArtGenerator extends EditorModule {
             try {
                 this._reduce(ctx, parseInt(mode) || 16);
             } catch (e) {
-                this.app.toast.show('warning', 'Aviso de Segurana', 'A imagem foi carregada, mas o navegador bloqueou a leitura de pixels (CORS). A reduo de paleta foi ignorada.');
+                this.app.toast.show('warning', 'Aviso de Seguran�a', 'A imagem foi carregada, mas o navegador bloqueou a leitura de pixels (CORS). A redu��o de paleta foi ignorada.');
             }
         }
 
@@ -570,8 +571,8 @@ class AIPixelArtGenerator extends EditorModule {
 
     _handleError(msg) {
         const isLocal = window.location.protocol === 'file:';
-        const advice = isLocal ? "\n\nDica: Voc est usando o protocolo 'file:'. Use o Live Server do VS Code para evitar bloqueios do navegador." : "";
-        this.app.toast.show('error', 'Erro de Gerao', msg + advice);
+        const advice = isLocal ? "\n\nDica: Voc� est� usando o protocolo 'file:'. Use o Live Server do VS Code para evitar bloqueios do navegador." : "";
+        this.app.toast.show('error', 'Erro de Gera��o', msg + advice);
     }
 
     _reduce(ctx, n) {
@@ -594,7 +595,7 @@ class AIPixelArtGenerator extends EditorModule {
                 this.app.saveHistory();
             } catch (e) {
                 this.app.logger.error('AIGenerator', 'Erro ao aplicar imagem ao canvas (CORS)', { error: e.message });
-                this.app.toast.show('error', 'Erro de Segurana', 'No foi possvel aplicar a imagem ao canvas devido a restries de segurana do navegador (CORS).');
+                this.app.toast.show('error', 'Erro de Seguran�a', 'N�o foi poss�vel aplicar a imagem ao canvas devido a restri��es de seguran�a do navegador (CORS).');
             }
         }
         this.dom('ai-modal').style.display = 'none';

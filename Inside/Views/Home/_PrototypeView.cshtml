@@ -82,11 +82,14 @@
         <div class="proto-workspace-header">
             <div class="proto-workspace-title-group">
                 <div class="status-badge badge-cpp">C++ SOURCE</div>
-                <h2 style="font-size: 0.85rem; font-family: 'JetBrains Mono'; color: var(--primary);">pixelstream_v5.ino</h2>
+                <h2 id="active-screen-title" style="font-size: 0.85rem; font-family: 'JetBrains Mono'; color: var(--primary);">Screen1</h2>
+                <div id="proto-sync-status" class="sync-badge sync-synced">
+                    <i data-lucide="check-circle" style="width:12px;"></i> <span>Sincronizado</span>
+                </div>
             </div>
             <div class="action-row">
                 <button class="secondary-btn small-btn" onclick="
-                    const code = document.getElementById('proto-code-preview').value;
+                    const code = (window.app && window.app.prototype && window.app.prototype.view && window.app.prototype.view.editor) ? window.app.prototype.view.editor.getValue() : document.getElementById('proto-code-preview').value;
                     navigator.clipboard.writeText(code);
                     if(app?.toast) app.toast.show('success','Copiado','');">
                     <i data-lucide="copy"></i> Copiar

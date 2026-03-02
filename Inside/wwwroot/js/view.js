@@ -283,6 +283,8 @@ class PrototypeView {
         if (title && model.activeScreen) {
             title.textContent = model.activeScreen.name;
         }
+
+        if (this.app?.status) this.app.status.refreshMetrics();
     }
 
     // ─── Screen List ───────────────────────────────────────────────────────────
@@ -369,26 +371,16 @@ class PrototypeView {
             card.className = `screen-card-compact ${isActive ? 'active' : ''}`;
             card.onclick = () => this.onSelectScreen?.(screen.id);
 
+            const title = document.createElement('div');
+            title.style.cssText = 'font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;';
+            title.textContent = screen.name;
+
             const canvas = document.createElement('canvas');
             canvas.width = 240; canvas.height = 240;
+            canvas.style.cssText = 'width: 100%; height: auto; background: #000; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
 
-            const info = document.createElement('div');
-            info.className = 'screen-card-info';
-
-            const name = document.createElement('span');
-            name.className = 'screen-name';
-            name.textContent = screen.name;
-
-            const meta = document.createElement('span');
-            meta.className = 'screen-meta';
-            meta.textContent = `${screen.elements.length} elementos | ${screen.backgroundAsset || 'Sem fundo'}`;
-
-            info.appendChild(name);
-            info.appendChild(meta);
-
+            card.appendChild(title);
             card.appendChild(canvas);
-            card.appendChild(info);
-
             this.dom.mainGallery.appendChild(card);
             this._drawToCanvas(screen, canvas, model.assets);
         });
@@ -715,98 +707,90 @@ class PrototypeView {
             }
 
             screen.elements.forEach(el => {
-                const color = el.colorBind || this.hexTo565(el.color);
-                const ex = el.xBind || el.x;
-                const ey = el.yBind || el.y;
-                const ew = el.wBind || el.w;
-                const eh = el.hBind || el.h;
+                const color = this.hexTo565(el.color);
                 const nameComment = `// ${el.name}`;
 
                 if (el.asset) {
-                    code += `  tft.pushImage(${ex}, ${ey}, ${ew}, ${eh}, ${el.asset}); ${nameComment}\n`;
+                    code += `  tft.pushImage(${el.x}, ${el.y}, ${el.w}, ${el.h}, ${el.asset}); ${nameComment}\n`;
                 } else {
                     switch (el.type) {
                         case 'fillCircle':
                         case 'circle': // legacy
                         case 'drawCircle': {
-                            const cx = el.xBind ? `${ex} + (${ew}/2)` : Math.round(el.x + el.w / 2);
-                            const cy = el.yBind ? `${ey} + (${eh}/2)` : Math.round(el.y + el.h / 2);
-                            const r = el.wBind ? `Math.min(${ew}, ${eh}) / 2` : Math.round(Math.min(el.w, el.h) / 2);
+                            const cx = Math.round(el.x + el.w / 2);
+                            const cy = Math.round(el.y + el.h / 2);
+                            const r = Math.round(Math.min(el.w, el.h) / 2);
                             const cmd = el.type.startsWith('draw') ? 'drawCircle' : 'fillCircle';
                             code += `  tft.${cmd}(${cx}, ${cy}, ${r}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'fillRoundRect':
                         case 'drawRoundRect': {
-                            const r = el.wBind ? `Math.min(${ew}, ${eh}) / 4` : Math.round(Math.min(el.w, el.h) / 4);
+                            const r = Math.round(Math.min(el.w, el.h) / 4);
                             const cmd = el.type.startsWith('draw') ? 'drawRoundRect' : 'fillRoundRect';
-                            code += `  tft.${cmd}(${ex}, ${ey}, ${ew}, ${eh}, ${r}, ${color}); ${nameComment}\n`;
+                            code += `  tft.${cmd}(${el.x}, ${el.y}, ${el.w}, ${el.h}, ${r}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'fillTriangle':
                         case 'drawTriangle': {
                             // Isosceles triangle inside bounding box
-                            const x0 = el.xBind ? `${ex} + (${ew}/2)` : Math.round(el.x + el.w / 2);
-                            const y0 = ey;
-                            const x1 = ex, y1 = el.yBind ? `${ey} + ${eh}` : el.y + el.h;
-                            const x2 = el.xBind ? `${ex} + ${ew}` : el.x + el.w;
-                            const y2 = el.yBind ? `${ey} + ${eh}` : el.y + el.h;
+                            const x0 = Math.round(el.x + el.w / 2), y0 = el.y;
+                            const x1 = el.x, y1 = el.y + el.h;
+                            const x2 = el.x + el.w, y2 = el.y + el.h;
                             const cmd = el.type.startsWith('draw') ? 'drawTriangle' : 'fillTriangle';
                             code += `  tft.${cmd}(${x0}, ${y0}, ${x1}, ${y1}, ${x2}, ${y2}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'fillEllipse':
                         case 'drawEllipse': {
-                            const cx = el.xBind ? `${ex} + (${ew}/2)` : Math.round(el.x + el.w / 2);
-                            const cy = el.yBind ? `${ey} + (${eh}/2)` : Math.round(el.y + el.h / 2);
-                            const rx = el.wBind ? `(${ew}/2)` : Math.round(el.w / 2);
-                            const ry = el.hBind ? `(${eh}/2)` : Math.round(el.h / 2);
+                            const cx = Math.round(el.x + el.w / 2);
+                            const cy = Math.round(el.y + el.h / 2);
+                            const rx = Math.round(el.w / 2);
+                            const ry = Math.round(el.h / 2);
                             const cmd = el.type.startsWith('draw') ? 'drawEllipse' : 'fillEllipse';
                             code += `  tft.${cmd}(${cx}, ${cy}, ${rx}, ${ry}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawLine': {
-                            const x1 = el.xBind ? `${ex} + ${ew}` : el.x + el.w;
-                            const y1 = el.yBind ? `${ey} + ${eh}` : el.y + el.h;
-                            code += `  tft.drawLine(${ex}, ${ey}, ${x1}, ${y1}, ${color}); ${nameComment}\n`;
+                            const x1 = el.x + el.w;
+                            const y1 = el.y + el.h;
+                            code += `  tft.drawLine(${el.x}, ${el.y}, ${x1}, ${y1}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawFastHLine': {
-                            code += `  tft.drawFastHLine(${ex}, ${ey}, ${ew}, ${color}); ${nameComment}\n`;
+                            code += `  tft.drawFastHLine(${el.x}, ${el.y}, ${el.w}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawFastVLine': {
-                            code += `  tft.drawFastVLine(${ex}, ${ey}, ${eh}, ${color}); ${nameComment}\n`;
+                            code += `  tft.drawFastVLine(${el.x}, ${el.y}, ${el.h}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawPixel': {
-                            code += `  tft.drawPixel(${ex}, ${ey}, ${color}); ${nameComment}\n`;
+                            code += `  tft.drawPixel(${el.x}, ${el.y}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'drawString':
                         case 'drawCentreString': {
-                            // Use ValueBind if present, otherwise element Name
-                            const text = el.valueBind ? `String(${el.valueBind}).c_str()` : `"${el.name.replace(/"/g, '\\"')}"`;
-                            const isVariable = !!el.valueBind;
-
+                            // Use Name as text content
+                            const text = el.name.replace(/"/g, '\\"'); // escape quotes
                             // Size heuristic: assume height 8px = size 1
-                            const size = el.hBind ? `Math.max(1, (int)(${eh} / 8))` : Math.max(1, Math.round(el.h / 8));
+                            const size = Math.max(1, Math.round(el.h / 8));
                             code += `  tft.setTextColor(${color}); tft.setTextSize(${size});\n`;
                             if (el.type === 'drawCentreString') {
-                                const cx = el.xBind ? `${ex} + (${ew}/2)` : Math.round(el.x + el.w / 2);
-                                code += `  tft.drawCentreString(${text}, ${cx}, ${ey}, 2); ${nameComment}\n`;
+                                const cx = Math.round(el.x + el.w / 2);
+                                code += `  tft.drawCentreString("${text}", ${cx}, ${el.y}, 2); ${nameComment}\n`;
                             } else {
-                                code += `  tft.drawString(${text}, ${ex}, ${ey}); ${nameComment}\n`;
+                                code += `  tft.drawString("${text}", ${el.x}, ${el.y}); ${nameComment}\n`;
                             }
                             break;
                         }
                         case 'drawRect': {
-                            code += `  tft.drawRect(${ex}, ${ey}, ${ew}, ${eh}, ${color}); ${nameComment}\n`;
+                            code += `  tft.drawRect(${el.x}, ${el.y}, ${el.w}, ${el.h}, ${color}); ${nameComment}\n`;
                             break;
                         }
                         case 'fillRect':
                         default: {
-                            code += `  tft.fillRect(${ex}, ${ey}, ${ew}, ${eh}, ${color}); ${nameComment}\n`;
+                            code += `  tft.fillRect(${el.x}, ${el.y}, ${el.w}, ${el.h}, ${color}); ${nameComment}\n`;
                             break;
                         }
                     }
@@ -836,7 +820,9 @@ class PrototypeView {
         }
 
         // Only update if changed (prevents cursor jumping if exact same)
-        this.updateCodeValue(code);
+        if (this.dom.codePreview.value !== code) {
+            this.dom.codePreview.value = code;
+        }
     }
 
     hexTo565(hex) {
@@ -862,9 +848,7 @@ class PrototypeView {
      */
     _parseElementsFromCode(code, fnName) {
         const elements = [];
-        this._lastParsedColor = '#ffffff'; // Reset state per function
-        this._lastParsedSize = 16;
-
+        // Extract just the body of the active screen function
         const fnRe = new RegExp(`void\\s+draw_${fnName}\\s*\\([^)]*\\)\\s*\\{([\\s\\S]*?)\\}`);
         const fnMatch = code.match(fnRe);
         const body = fnMatch ? fnMatch[1] : code;
@@ -879,14 +863,12 @@ class PrototypeView {
             const commentMatch = trimmed.match(/\/\/\s*(.*)$/);
             if (commentMatch) name = commentMatch[1].trim();
 
-            const parseColor = (val) => {
-                const cleanVal = val.trim();
-                if (this._tftColors[cleanVal] !== undefined) return this._rgb565ToHex(this._tftColors[cleanVal]);
-                return this._rgb565ToHex(parseInt(cleanVal, cleanVal.startsWith('0x') || cleanVal.startsWith('0X') ? 16 : 10));
-            };
+            // Helper to parse color
+            const parseColor = (val) => this._rgb565ToHex(parseInt(val, val.startsWith('0x') || val.startsWith('0X') ? 16 : 10));
 
             // 1. Rects (fill/draw)
-            const rectM = trimmed.match(/tft\.(fill|draw)Rect\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
+            // tft.fillRect(x, y, w, h, color)
+            const rectM = trimmed.match(/tft\.(fill|draw)Rect\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
             if (rectM) {
                 elements.push({
                     type: rectM[1] + 'Rect',
@@ -899,7 +881,8 @@ class PrototypeView {
             }
 
             // 2. Circles (fill/draw)
-            const circM = trimmed.match(/tft\.(fill|draw)Circle\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
+            // tft.fillCircle(cx, cy, r, color) -> convert to box x,y,w,h
+            const circM = trimmed.match(/tft\.(fill|draw)Circle\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
             if (circM) {
                 const cx = parseInt(circM[2]), cy = parseInt(circM[3]), r = parseInt(circM[4]);
                 elements.push({
@@ -912,7 +895,8 @@ class PrototypeView {
             }
 
             // 3. Round Rects
-            const rRectM = trimmed.match(/tft\.(fill|draw)RoundRect\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
+            // tft.fillRoundRect(x, y, w, h, r, color)
+            const rRectM = trimmed.match(/tft\.(fill|draw)RoundRect\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
             if (rRectM) {
                 elements.push({
                     type: rRectM[1] + 'RoundRect',
@@ -925,13 +909,14 @@ class PrototypeView {
             }
 
             // 4. Lines
-            const lineM = trimmed.match(/tft\.drawLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
+            // tft.drawLine(x0, y0, x1, y1, color) -> box x,y,w,h
+            const lineM = trimmed.match(/tft\.drawLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
             if (lineM) {
                 const x0 = parseInt(lineM[1]), y0 = parseInt(lineM[2]);
                 const x1 = parseInt(lineM[3]), y1 = parseInt(lineM[4]);
                 elements.push({
                     type: 'drawLine',
-                    x: x0, y: y0, w: x1 - x0, h: y1 - y0,
+                    x: x0, y: y0, w: x1 - x0, h: y1 - y0, // Storing delta as w/h for lines
                     color: parseColor(lineM[5]),
                     name: name || 'line'
                 });
@@ -939,7 +924,7 @@ class PrototypeView {
             }
 
             // 5. Fast Lines (H/V)
-            const hLineM = trimmed.match(/tft\.drawFastHLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
+            const hLineM = trimmed.match(/tft\.drawFastHLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
             if (hLineM) {
                 elements.push({
                     type: 'drawFastHLine',
@@ -950,7 +935,7 @@ class PrototypeView {
                 });
                 continue;
             }
-            const vLineM = trimmed.match(/tft\.drawFastVLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+|[a-zA-Z0-9_]+)\s*\)/);
+            const vLineM = trimmed.match(/tft\.drawFastVLine\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(0[xX][0-9A-Fa-f]+|\d+)/);
             if (vLineM) {
                 elements.push({
                     type: 'drawFastVLine',
@@ -963,22 +948,23 @@ class PrototypeView {
             }
 
             // 6. Text (drawString / drawCentreString / print / println)
-            const txtM = trimmed.match(/tft\.(drawString|drawCentreString)\s*\(\s*"(.*?)"\s*,\s*(-?\d+)\s*,\s*(-?\d+)(?:\s*,\s*(\d+))?\s*\)/);
+            const txtM = trimmed.match(/tft\.(drawString|drawCentreString)\s*\(\s*"(.*?)"\s*,\s*(-?\d+)\s*,\s*(-?\d+)(?:\s*,\s*(\d+))?/);
             if (txtM) {
                 elements.push({
                     type: txtM[1],
                     x: parseInt(txtM[3]), y: parseInt(txtM[4]),
-                    w: 0, h: this._lastParsedSize || 16,
-                    color: this._lastParsedColor || '#ffffff',
-                    name: txtM[2]
+                    w: 0, h: 0,
+                    color: '#ffffff', // default, modified by state if we had a full AST
+                    name: txtM[2] // Content
                 });
                 continue;
             }
 
             // 7. PushImage (Assets / Backgrounds)
-            const imgM = trimmed.match(/tft\.pushImage\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*([a-zA-Z0-9_]+)\s*\)/);
+            const imgM = trimmed.match(/tft\.pushImage\s*\(\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*([a-zA-Z0-9_]+)/);
             if (imgM) {
                 const assetName = imgM[5];
+                // Check if this is the screen background
                 if (assetName === `${fnName}_bg`) continue;
 
                 elements.push({
@@ -988,20 +974,6 @@ class PrototypeView {
                     asset: assetName,
                     name: name || assetName
                 });
-                continue;
-            }
-
-            // 8. Text Colors and Settings (Implicit state parsing)
-            const colorM = trimmed.match(/tft\.setTextColor\s*\(\s*([^)]+)\s*\)/);
-            if (colorM) {
-                this._lastParsedColor = parseColor(colorM[1]);
-                continue;
-            }
-
-            const sizeM = trimmed.match(/tft\.setTextSize\s*\(\s*(\d+)\s*\)/);
-            if (sizeM) {
-                this._lastParsedSize = parseInt(sizeM[1]) * 8;
-                continue;
             }
         }
         return elements;
@@ -1013,7 +985,6 @@ class PrototypeView {
      */
     _parseScreenOrderFromCode(code) {
         const order = [];
-        // Regex mais flexível para suportar espaços: void [espaços] draw_Nome [espaços] (
         const re = /void\s+draw_([a-zA-Z0-9_]+)\s*\(/g;
         let match;
         while ((match = re.exec(code)) !== null) {
@@ -1252,7 +1223,7 @@ class PrototypeView {
         if (!el) {
             this.dom.interactionPanel.innerHTML = `
                 <div class="inspector-group">
-                    <div class="inspector-section-title">PROPRIEDADES DA TELA</div>
+                    <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">PROPRIEDADES DA TELA</div>
                     <div style="display:grid;grid-template-columns:1fr;gap:12px;">
                         <div class="input-field compact">
                             <span>Nome da Tela</span>
@@ -1321,7 +1292,7 @@ class PrototypeView {
 
         this.dom.interactionPanel.innerHTML = `
             <div class="inspector-group">
-                <div class="inspector-section-title">PROPRIEDADES</div>
+                <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">PROPRIEDADES</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                     <div class="input-field compact">
                         <span>Nome</span>
@@ -1341,55 +1312,17 @@ class PrototypeView {
             </div>
 
             <div class="inspector-group" style="margin-top:12px;">
-                <div class="inspector-section-title">POSIÇÃO & TAMANHO</div>
+                <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">POSIÇÃO & TAMANHO</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                    <div class="input-field compact">
-                        <span>X</span>
-                        <div style="display:flex;gap:4px;">
-                            <input type="number" data-prop="x" value="${el.x ?? 10}" style="flex:1;">
-                            <input type="text" data-prop="xBind" value="${el.xBind || ''}" placeholder="🔗 var" title="Vínculo C++" class="binding-input" style="width:60px;">
-                        </div>
-                    </div>
-                    <div class="input-field compact">
-                        <span>Y</span>
-                        <div style="display:flex;gap:4px;">
-                            <input type="number" data-prop="y" value="${el.y ?? 10}" style="flex:1;">
-                            <input type="text" data-prop="yBind" value="${el.yBind || ''}" placeholder="🔗 var" title="Vínculo C++" class="binding-input" style="width:60px;">
-                        </div>
-                    </div>
-                    <div class="input-field compact">
-                        <span>W</span>
-                        <div style="display:flex;gap:4px;">
-                            <input type="number" data-prop="w" value="${el.w ?? 50}" style="flex:1;">
-                            <input type="text" data-prop="wBind" value="${el.wBind || ''}" placeholder="🔗 var" title="Vínculo C++" class="binding-input" style="width:60px;">
-                        </div>
-                    </div>
-                    <div class="input-field compact">
-                        <span>H</span>
-                        <div style="display:flex;gap:4px;">
-                            <input type="number" data-prop="h" value="${el.h ?? 50}" style="flex:1;">
-                            <input type="text" data-prop="hBind" value="${el.hBind || ''}" placeholder="🔗 var" title="Vínculo C++" class="binding-input" style="width:60px;">
-                        </div>
-                    </div>
+                    <div class="input-field compact"><span>X</span><input type="number" data-prop="x" value="${el.x ?? 10}"></div>
+                    <div class="input-field compact"><span>Y</span><input type="number" data-prop="y" value="${el.y ?? 10}"></div>
+                    <div class="input-field compact"><span>W</span><input type="number" data-prop="w" value="${el.w ?? 50}"></div>
+                    <div class="input-field compact"><span>H</span><input type="number" data-prop="h" value="${el.h ?? 50}"></div>
                 </div>
             </div>
 
             <div class="inspector-group" style="margin-top:12px;">
-                <div class="inspector-section-title">LÓGICA DINÂMICA</div>
-                <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;">
-                    <div class="input-field compact">
-                        <span>Vínculo Cor</span>
-                        <input type="text" data-prop="colorBind" value="${el.colorBind || ''}" placeholder="🔗 var_cor" class="binding-input">
-                    </div>
-                    <div class="input-field compact">
-                        <span>Vínculo Valor</span>
-                        <input type="text" data-prop="valueBind" value="${el.valueBind || ''}" placeholder="🔗 var_valor" class="binding-input">
-                    </div>
-                </div>
-            </div>
-
-            <div class="inspector-group">
-                <div class="inspector-section-title">INTERAÇÃO</div>
+                <div class="inspector-label" style="font-size:0.6rem;color:var(--primary);font-weight:800;margin-bottom:10px;letter-spacing:1px;">INTERAÇÃO</div>
                 <div class="input-field compact">
                     <span>Ir para Tela</span>
                     <select data-prop="targetScreenId" style="width:100%;">
@@ -1399,7 +1332,7 @@ class PrototypeView {
                 </div>
             </div>
 
-            <button class="secondary-btn del-el-btn" style="width:100%; margin-top:12px; color:var(--error); border-color:var(--glass-border);">
+            <button class="secondary-btn del-el-btn" style="width:100%;margin-top:12px;color:#ef4444;border-color:rgba(239,68,68,0.2);">
                 <i data-lucide="trash-2" style="width:14px;"></i> Excluir
             </button>
         `;
