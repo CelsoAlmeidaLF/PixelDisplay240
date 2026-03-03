@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Engineer/">
     <Project Path="AuthSecurity/Kernel/Systekna.Kernel/Systekna.Security.csproj" />
+    <Project Path="Systekna.Application/Systekna.Application.csproj" Id="81eaf85c-296f-45c1-831e-dd09f1195ab9" />
   </Folder>
   <Folder Name="/Web/">
     <Project Path="AuthSecurity/Web/WbAdmin/WbGovAdmin.csproj" />

@@ -5,6 +5,7 @@ using Systekna.Kernel.Extensions;
 using Systekna.Kernel.Infrastructure.Security;
 using System.Text;
 using WbAdmin.Endpoints;
+using WbGovAdmin.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,9 @@ else
     Console.WriteLine(">>> [WbGovAdmin] ATENCAO: Usando banco em MEMORIA (nao compartilhado)");
 }
 #endif
+
+// === SERVICOS DE SEGURANCA ADICIONAIS ===
+builder.Services.AddSysteknaSecurityServices(isDevelopment);
 
 // Register Use Cases (especificos deste projeto)
 builder.Services.AddScoped<LoginUseCase>();
@@ -87,7 +91,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<GlobalExceptionMiddleware>();
+// === MIDDLEWARES DE SEGURANCA ===
+app.UseSysteknaSecurityDefaults(app.Environment);
 
 app.UseStaticFiles(); // Re-enabled for testing purposes
 
@@ -101,6 +106,7 @@ app.MapHostEndpoints();
 app.MapReportEndpoints();
 app.MapPublicEndpoints();
 app.MapPixelDisplayAdminEndpoints();
+app.MapSystemRegistryEndpoints();
 
 app.Run();
 

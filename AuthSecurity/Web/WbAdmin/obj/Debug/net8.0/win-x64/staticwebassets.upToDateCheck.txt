@@ -1,0 +1,8 @@
+wwwroot\admin.html
+wwwroot\css\main.css
+wwwroot\favicon.ico
+wwwroot\index.html
+wwwroot\js\admin.js
+wwwroot\js\app.js
+wwwroot\js\login.js
+wwwroot\login.html

@@ -85,6 +85,8 @@ public static class SysteknaSecurityExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IAuditRepository, AuditRepository>();
         services.AddScoped<ISettingRepository, SettingRepository>();
+        services.AddScoped<IRegisteredSystemRepository, RegisteredSystemRepository>();
+        services.AddScoped<IUserSystemAccessRepository, UserSystemAccessRepository>();
 
         // Registrar servicos de seguranca
         services.AddSingleton<IPasswordHasher, MyPasswordHasher>();
@@ -124,6 +126,7 @@ public static class SysteknaSecurityExtensions
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IGovernanceService, GovernanceService>();
         services.AddScoped<IVpsManagerService, VpsManagerService>();
+        services.AddScoped<ISystemRegistryService, SystemRegistryService>();
     }
 
     /// <summary>
@@ -213,6 +216,9 @@ public static class SysteknaSecurityExtensions
             }
         }
 
+        // === SEED DE SISTEMAS PADRAO ===
+        await SeedDefaultSystemsAsync(context);
+
         if (usersCreated)
         {
             Console.WriteLine(">>> [SEED] Usuarios criados no banco centralizado.");
@@ -220,6 +226,106 @@ public static class SysteknaSecurityExtensions
         else
         {
             Console.WriteLine(">>> [SEED] Banco ja possui usuarios. Seed ignorado.");
+        }
+    }
+
+    /// <summary>
+    /// Cria sistemas padrao no banco de dados
+    /// </summary>
+    private static async Task SeedDefaultSystemsAsync(AuthDbContext context)
+    {
+        var systemsCreated = false;
+
+        // Sistema: PixelDisplay240
+        if (!await context.RegisteredSystems.AnyAsync(s => s.SystemCode == "pixeldisplay240"))
+        {
+            var pixelDisplay = new RegisteredSystem
+            {
+                SystemCode = "pixeldisplay240",
+                DisplayName = "PixelDisplay240 PRO",
+                Description = "IDE para desenvolvimento de interfaces embarcadas em displays TFT 240x240",
+                BaseUrl = "/",
+                IconUrl = "/images/pixeldisplay-icon.png",
+                AvailablePolicies = "PixelDisplay;PixelDisplay.AI;PixelDisplay.Export;PixelDisplay.Projects",
+                IsActive = true,
+                RequiresApproval = false,
+                ApiSecret = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
+            };
+
+            try
+            {
+                context.RegisteredSystems.Add(pixelDisplay);
+                await context.SaveChangesAsync();
+                systemsCreated = true;
+                Console.WriteLine(">>>        Sistema 'PixelDisplay240 PRO' criado");
+            }
+            catch (DbUpdateException)
+            {
+                context.Entry(pixelDisplay).State = EntityState.Detached;
+            }
+        }
+
+        // Sistema: WbGovAdmin
+        if (!await context.RegisteredSystems.AnyAsync(s => s.SystemCode == "wbgovadmin"))
+        {
+            var govAdmin = new RegisteredSystem
+            {
+                SystemCode = "wbgovadmin",
+                DisplayName = "WB Governance Admin",
+                Description = "Painel de administração e governança centralizada",
+                BaseUrl = "/admin",
+                IconUrl = "/images/admin-icon.png",
+                AvailablePolicies = "WbGovAdmin;GovAdmin;BaseAccess",
+                IsActive = true,
+                RequiresApproval = true,
+                ApiSecret = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
+            };
+
+            try
+            {
+                context.RegisteredSystems.Add(govAdmin);
+                await context.SaveChangesAsync();
+                systemsCreated = true;
+                Console.WriteLine(">>>        Sistema 'WB Governance Admin' criado");
+            }
+            catch (DbUpdateException)
+            {
+                context.Entry(govAdmin).State = EntityState.Detached;
+            }
+        }
+
+        // Sistema: WbAuth (Autenticação centralizada)
+        if (!await context.RegisteredSystems.AnyAsync(s => s.SystemCode == "wbauth"))
+        {
+            var wbAuth = new RegisteredSystem
+            {
+                SystemCode = "wbauth",
+                DisplayName = "WB Auth Service",
+                Description = "Serviço de autenticação e autorização centralizada",
+                BaseUrl = "/auth",
+                IconUrl = "/images/auth-icon.png",
+                AvailablePolicies = "WbAuth;BaseAccess",
+                IsActive = true,
+                RequiresApproval = false,
+                ApiSecret = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
+            };
+
+            try
+            {
+                context.RegisteredSystems.Add(wbAuth);
+                await context.SaveChangesAsync();
+                systemsCreated = true;
+                Console.WriteLine(">>>        Sistema 'WB Auth Service' criado");
+            }
+            catch (DbUpdateException)
+            {
+                context.Entry(wbAuth).State = EntityState.Detached;
+            }
+        }
+
+        if (systemsCreated)
+        {
+            Console.WriteLine(">>> [SEED] Sistemas padrao criados no banco centralizado.");
         }
     }
 }

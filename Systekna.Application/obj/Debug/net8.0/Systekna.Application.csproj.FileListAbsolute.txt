@@ -1,0 +1,13 @@
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\bin\Debug\net8.0\Systekna.Application.deps.json
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\bin\Debug\net8.0\Systekna.Application.dll
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\bin\Debug\net8.0\Systekna.Application.pdb
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\Systekna.Application.csproj.AssemblyReference.cache
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\Systekna.Application.GeneratedMSBuildEditorConfig.editorconfig
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\Systekna.Application.AssemblyInfoInputs.cache
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\Systekna.Application.AssemblyInfo.cs
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\Systekna.Application.csproj.CoreCompileInputs.cache
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\Systekna.Application.sourcelink.json
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\Systekna.Application.dll
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\refint\Systekna.Application.dll
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\Systekna.Application.pdb
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\Systekna.Application\obj\Debug\net8.0\ref\Systekna.Application.dll

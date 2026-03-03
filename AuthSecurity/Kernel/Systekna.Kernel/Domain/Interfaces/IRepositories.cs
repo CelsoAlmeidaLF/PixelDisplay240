@@ -30,3 +30,35 @@ public interface ISettingRepository
     Task<List<SystemSetting>> GetAllAsync();
     Task UpdateAsync(SystemSetting setting);
 }
+
+// ========================================
+// Repositórios para Sistemas Cadastrados
+// ========================================
+
+public interface IRegisteredSystemRepository
+{
+    Task<RegisteredSystem?> GetByIdAsync(int id);
+    Task<RegisteredSystem?> GetByCodeAsync(string systemCode);
+    Task<List<RegisteredSystem>> GetAllAsync();
+    Task<List<RegisteredSystem>> GetActiveAsync();
+    Task AddAsync(RegisteredSystem system);
+    Task UpdateAsync(RegisteredSystem system);
+    Task DeleteAsync(RegisteredSystem system);
+    Task<bool> ExistsAsync(string systemCode);
+}
+
+public interface IUserSystemAccessRepository
+{
+    Task<UserSystemAccess?> GetByIdAsync(int id);
+    Task<UserSystemAccess?> GetByUserAndSystemAsync(int userId, int systemId);
+    Task<List<UserSystemAccess>> GetByUserIdAsync(int userId);
+    Task<List<UserSystemAccess>> GetBySystemIdAsync(int systemId);
+    Task<List<UserSystemAccess>> GetPendingBySystemIdAsync(int systemId);
+    Task<List<UserSystemAccess>> GetActiveBySystemIdAsync(int systemId);
+    Task AddAsync(UserSystemAccess access);
+    Task UpdateAsync(UserSystemAccess access);
+    Task DeleteAsync(UserSystemAccess access);
+    Task<int> CountBySystemIdAsync(int systemId);
+    Task<int> CountActiveBySystemIdAsync(int systemId);
+    Task<int> CountPendingBySystemIdAsync(int systemId);
+}

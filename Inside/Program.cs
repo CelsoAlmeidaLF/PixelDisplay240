@@ -2,9 +2,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PixelDisplay240Api.Endpoints;
-using PixelDisplay240Api.Models;
-using PixelDisplay240Api.Services;
+using Systekna.Application.Domain.Entities;
+using Systekna.Application.DTOs;
+using Systekna.Application.Extensions;
+using Systekna.Application.Services;
 using Systekna.Kernel.Extensions;
+using Systekna.Kernel.Infrastructure.Security;
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
@@ -41,6 +44,9 @@ else
     Console.WriteLine(">>> [PixelDisplay240] ATENCAO: Usando banco em MEMORIA (nao compartilhado)");
 }
 #endif
+
+// === SERVICOS DE SEGURANCA ADICIONAIS ===
+builder.Services.AddSysteknaSecurityServices(isDevelopment);
 
 // === OPTIONS PATTERN - Configuracoes Tipadas ===
 builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
@@ -101,17 +107,8 @@ builder.Services.AddCors(options =>
 // === HEALTH CHECKS ===
 builder.Services.AddHealthChecks();
 
-// === SERVICES (PixelDisplay240 Especificos) ===
-builder.Services.AddSingleton<AgentConfigService>();
-builder.Services.AddSingleton<LogService>();
-builder.Services.AddSingleton<PrototypeService>();
-builder.Services.AddSingleton<HardwareExportService>();
-
-var aiConfig = builder.Configuration.GetSection(AIOptions.SectionName).Get<AIOptions>() ?? new();
-builder.Services.AddHttpClient<AIService>(client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(aiConfig.TimeoutSeconds);
-});
+// === SERVICES (PixelDisplay240 - via Systekna.Application) ===
+builder.Services.AddPixelDisplayServices(builder.Environment);
 
 builder.Services.AddAuthorization(options =>
 {
@@ -190,6 +187,10 @@ if (isDevelopment || seedDefaultUser)
 var contentRoot = app.Environment.ContentRootPath;
 
 // === MIDDLEWARE PIPELINE ===
+
+// Middlewares de seguranca (headers, deteccao de ameacas, tratamento de erros)
+app.UseSysteknaSecurityDefaults(app.Environment);
+
 app.UseWebOptimizer();
 app.UseStaticFiles();
 
@@ -231,13 +232,13 @@ app.MapAllAuthEndpoints();
 // Apenas clientes (User) e administradores (Admin) podem acessar
 var api = app.MapGroup("/api").RequireAuthorization("ClienteOuAdmin").RequireRateLimiting("api");
 
-api.MapGet("/agents", (AgentConfigService configService) =>
+api.MapGet("/agents", (IAgentConfigService configService) =>
 {
     var data = configService.LoadConfig();
     return Results.Json(data, jsonOptions);
 });
 
-api.MapPost("/agents", async (HttpRequest request, AgentConfigService configService) =>
+api.MapPost("/agents", async (HttpRequest request, IAgentConfigService configService) =>
 {
     var data = await request.ReadFromJsonAsync<AgentConfig>(jsonOptions);
     if (data == null) return Results.BadRequest(new { message = "Invalid payload" });
@@ -245,7 +246,7 @@ api.MapPost("/agents", async (HttpRequest request, AgentConfigService configServ
     return Results.Json(new { ok = true }, jsonOptions);
 });
 
-api.MapPost("/logs", async (HttpRequest request, LogService logService) =>
+api.MapPost("/logs", async (HttpRequest request, ILogService logService) =>
 {
     if (!enableLogs) return Results.NotFound();
     using var doc = await JsonDocument.ParseAsync(request.Body);
@@ -258,7 +259,7 @@ api.MapPost("/logs", async (HttpRequest request, LogService logService) =>
     return Results.Ok();
 });
 
-api.MapPost("/config", async (HttpRequest request, AgentConfigService configService) =>
+api.MapPost("/config", async (HttpRequest request, IAgentConfigService configService) =>
 {
     using var doc = await JsonDocument.ParseAsync(request.Body);
     var root = doc.RootElement;
@@ -274,7 +275,7 @@ api.MapPost("/config", async (HttpRequest request, AgentConfigService configServ
     return Results.Ok(new { message = "Configuracao salva com seguranca!" });
 });
 
-api.MapGet("/ai/image", async (string prompt, int? seed, AgentConfigService configService, AIService aiService) =>
+api.MapGet("/ai/image", async (string prompt, int? seed, IAgentConfigService configService, IAIService aiService) =>
 {
     if (string.IsNullOrWhiteSpace(prompt)) return Results.BadRequest(new { message = "Prompt required" });
     
@@ -308,7 +309,7 @@ api.MapGet("/ai/image", async (string prompt, int? seed, AgentConfigService conf
     return Results.File(bytes!, "image/png");
 }).RequireRateLimiting("ai").RequireAuthorization("PixelDisplay.AI");
 
-api.MapPost("/ai/auto-layout", async (HttpRequest request, AgentConfigService configService, AIService aiService) =>
+api.MapPost("/ai/auto-layout", async (HttpRequest request, IAgentConfigService configService, IAIService aiService) =>
 {
     using var doc = await JsonDocument.ParseAsync(request.Body);
     var root = doc.RootElement;
@@ -326,9 +327,9 @@ api.MapPost("/ai/auto-layout", async (HttpRequest request, AgentConfigService co
 }).RequireRateLimiting("ai").RequireAuthorization("PixelDisplay.AI");
 
 // --- PROTOTYPE API ---
-api.MapGet("/prototype", (PrototypeService service) => Results.Json(service.GetProject(), jsonOptions));
+api.MapGet("/prototype", (IPrototypeService service) => Results.Json(service.GetProject(), jsonOptions));
 
-api.MapPost("/prototype/save", async (HttpRequest request, PrototypeService service) => {
+api.MapPost("/prototype/save", async (HttpRequest request, IPrototypeService service) => {
     try {
         var project = await request.ReadFromJsonAsync<PrototypeProject>(jsonOptions);
         if (project != null) service.SaveProject(project);
@@ -338,7 +339,7 @@ api.MapPost("/prototype/save", async (HttpRequest request, PrototypeService serv
     }
 });
 
-api.MapGet("/prototype/export", (HardwareExportService exportService, PrototypeService service) => {
+api.MapGet("/prototype/export", (IHardwareExportService exportService, IPrototypeService service) => {
     var project = service.GetProject();
     var zipBytes = exportService.GenerateProjectZip(project);
     return Results.File(zipBytes, "application/zip", "PixelDisplay240_Project.zip");

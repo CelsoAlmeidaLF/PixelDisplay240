@@ -59,3 +59,135 @@ public class SettingRepository : ISettingRepository
         await _context.SaveChangesAsync();
     }
 }
+
+// ========================================
+// Repositório de Sistemas Cadastrados
+// ========================================
+
+public class RegisteredSystemRepository : IRegisteredSystemRepository
+{
+    private readonly AuthDbContext _context;
+    public RegisteredSystemRepository(AuthDbContext context) => _context = context;
+
+    public async Task<RegisteredSystem?> GetByIdAsync(int id)
+        => await _context.RegisteredSystems
+            .Include(s => s.UserAccesses)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+    public async Task<RegisteredSystem?> GetByCodeAsync(string systemCode)
+        => await _context.RegisteredSystems
+            .Include(s => s.UserAccesses)
+            .FirstOrDefaultAsync(s => s.SystemCode == systemCode);
+
+    public async Task<List<RegisteredSystem>> GetAllAsync()
+        => await _context.RegisteredSystems
+            .Include(s => s.UserAccesses)
+            .OrderBy(s => s.DisplayName)
+            .ToListAsync();
+
+    public async Task<List<RegisteredSystem>> GetActiveAsync()
+        => await _context.RegisteredSystems
+            .Include(s => s.UserAccesses)
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.DisplayName)
+            .ToListAsync();
+
+    public async Task AddAsync(RegisteredSystem system)
+    {
+        _context.RegisteredSystems.Add(system);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(RegisteredSystem system)
+    {
+        system.UpdatedAt = DateTime.UtcNow;
+        _context.RegisteredSystems.Update(system);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(RegisteredSystem system)
+    {
+        _context.RegisteredSystems.Remove(system);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> ExistsAsync(string systemCode)
+        => await _context.RegisteredSystems.AnyAsync(s => s.SystemCode == systemCode);
+}
+
+// ========================================
+// Repositório de Acesso Usuário-Sistema
+// ========================================
+
+public class UserSystemAccessRepository : IUserSystemAccessRepository
+{
+    private readonly AuthDbContext _context;
+    public UserSystemAccessRepository(AuthDbContext context) => _context = context;
+
+    public async Task<UserSystemAccess?> GetByIdAsync(int id)
+        => await _context.UserSystemAccesses
+            .Include(a => a.User)
+            .Include(a => a.System)
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+    public async Task<UserSystemAccess?> GetByUserAndSystemAsync(int userId, int systemId)
+        => await _context.UserSystemAccesses
+            .Include(a => a.User)
+            .Include(a => a.System)
+            .FirstOrDefaultAsync(a => a.UserId == userId && a.SystemId == systemId);
+
+    public async Task<List<UserSystemAccess>> GetByUserIdAsync(int userId)
+        => await _context.UserSystemAccesses
+            .Include(a => a.System)
+            .Where(a => a.UserId == userId)
+            .OrderBy(a => a.System!.DisplayName)
+            .ToListAsync();
+
+    public async Task<List<UserSystemAccess>> GetBySystemIdAsync(int systemId)
+        => await _context.UserSystemAccesses
+            .Include(a => a.User)
+            .Where(a => a.SystemId == systemId)
+            .OrderBy(a => a.User!.Username)
+            .ToListAsync();
+
+    public async Task<List<UserSystemAccess>> GetPendingBySystemIdAsync(int systemId)
+        => await _context.UserSystemAccesses
+            .Include(a => a.User)
+            .Where(a => a.SystemId == systemId && !a.IsApproved && a.IsActive)
+            .OrderBy(a => a.RequestedAt)
+            .ToListAsync();
+
+    public async Task<List<UserSystemAccess>> GetActiveBySystemIdAsync(int systemId)
+        => await _context.UserSystemAccesses
+            .Include(a => a.User)
+            .Where(a => a.SystemId == systemId && a.IsActive && a.IsApproved)
+            .OrderBy(a => a.User!.Username)
+            .ToListAsync();
+
+    public async Task AddAsync(UserSystemAccess access)
+    {
+        _context.UserSystemAccesses.Add(access);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(UserSystemAccess access)
+    {
+        _context.UserSystemAccesses.Update(access);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(UserSystemAccess access)
+    {
+        _context.UserSystemAccesses.Remove(access);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<int> CountBySystemIdAsync(int systemId)
+        => await _context.UserSystemAccesses.CountAsync(a => a.SystemId == systemId);
+
+    public async Task<int> CountActiveBySystemIdAsync(int systemId)
+        => await _context.UserSystemAccesses.CountAsync(a => a.SystemId == systemId && a.IsActive && a.IsApproved);
+
+    public async Task<int> CountPendingBySystemIdAsync(int systemId)
+        => await _context.UserSystemAccesses.CountAsync(a => a.SystemId == systemId && !a.IsApproved && a.IsActive);
+}

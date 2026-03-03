@@ -26,5 +26,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AuthSecurity\Kernel\Systekna.Kernel\Systekna.Security.csproj" />
+    <ProjectReference Include="..\Systekna.Application\Systekna.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Domain\" />
+    <Folder Include="Models\" />
+    <Folder Include="Services\" />
   </ItemGroup>
 </Project>

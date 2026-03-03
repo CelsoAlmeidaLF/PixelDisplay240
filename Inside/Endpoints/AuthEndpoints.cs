@@ -1,4 +1,4 @@
-using PixelDisplay240Api.Models;
+using Systekna.Application.DTOs;
 using Systekna.Kernel.Application.Services;
 using Systekna.Kernel.Domain.DTOs;
 using Systekna.Kernel.Domain.Interfaces;

@@ -64,4 +64,40 @@ namespace Systekna.Kernel.Domain.Interfaces
         Task<bool> RestartServiceAsync(string serviceName);
         Task<List<string>> GetSystemLogsAsync(int lines = 50);
     }
+
+    // ========================================
+    // Serviço de Sistemas Cadastrados
+    // ========================================
+
+    public interface ISystemRegistryService
+    {
+        // CRUD de Sistemas
+        Task<List<RegisteredSystemDto>> GetAllSystemsAsync();
+        Task<RegisteredSystemDto?> GetSystemByIdAsync(int id);
+        Task<RegisteredSystemDto?> GetSystemByCodeAsync(string systemCode);
+        Task<RegisteredSystemDto> CreateSystemAsync(CreateSystemRequest request);
+        Task<RegisteredSystemDto?> UpdateSystemAsync(int id, UpdateSystemRequest request);
+        Task<bool> DeleteSystemAsync(int id);
+        Task<bool> ToggleSystemStatusAsync(int id);
+        Task<string> RegenerateApiSecretAsync(int id);
+
+        // Gerenciamento de Acesso de Usuários
+        Task<List<UserSystemAccessDto>> GetSystemUsersAsync(int systemId);
+        Task<List<UserSystemAccessDto>> GetPendingAccessRequestsAsync(int systemId);
+        Task<UserSystemAccessDto> GrantAccessAsync(GrantSystemAccessRequest request, int approverUserId);
+        Task<UserSystemAccessDto?> UpdateAccessAsync(int accessId, UpdateUserAccessRequest request);
+        Task<bool> RevokeAccessAsync(int accessId);
+        Task<bool> ApproveAccessAsync(int accessId, ApproveAccessRequest request, int approverUserId);
+
+        // Acesso do próprio usuário
+        Task<List<UserSystemSummaryDto>> GetUserSystemsAsync(int userId);
+        Task<UserSystemAccessDto?> RequestAccessAsync(int userId, RequestSystemAccessRequest request);
+        Task<bool> HasAccessAsync(int userId, string systemCode);
+        Task<string?> GetUserPoliciesForSystemAsync(int userId, string systemCode);
+        Task UpdateLastAccessAsync(int userId, int systemId);
+
+        // Estatísticas
+        Task<SystemStatsDto?> GetSystemStatsAsync(int systemId);
+        Task<List<SystemStatsDto>> GetAllSystemsStatsAsync();
+    }
 }

@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using PixelDisplay240Api.Models;
+using Systekna.Application.DTOs;
 
 namespace PixelDisplay240Api.Endpoints;
 
