@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Systekna.Security")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c9c36d70c6a357e799f2487bd92f4e4ebc5af345")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+464fbb59e1d737b4832ccc515cbf933d8f0e842d")]
 [assembly: System.Reflection.AssemblyProductAttribute("Systekna.Security")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Systekna.Security")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

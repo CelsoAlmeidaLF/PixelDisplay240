@@ -714,5 +714,563 @@
         "StatusCode": 200
       }
     ]
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_16",
+    "RelativePath": "api/my-systems/",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "User Systems"
+    ],
+    "EndpointName": "GetMySystems",
+    "Summary": "Lista sistemas do usu\u00E1rio atual"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_20",
+    "RelativePath": "api/my-systems/available",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "User Systems"
+    ],
+    "EndpointName": "GetAvailableSystems",
+    "Summary": "Lista sistemas dispon\u00EDveis para solicita\u00E7\u00E3o"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_18",
+    "RelativePath": "api/my-systems/check/{systemCode}",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "systemCode",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "User Systems"
+    ],
+    "EndpointName": "CheckSystemAccess",
+    "Summary": "Verifica se o usu\u00E1rio tem acesso a um sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_19",
+    "RelativePath": "api/my-systems/policies/{systemCode}",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "systemCode",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "User Systems"
+    ],
+    "EndpointName": "GetMyPoliciesForSystem",
+    "Summary": "Obt\u00E9m pol\u00EDticas do usu\u00E1rio em um sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_17",
+    "RelativePath": "api/my-systems/request",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "Systekna.Kernel.Domain.DTOs.RequestSystemAccessRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "User Systems"
+    ],
+    "EndpointName": "RequestSystemAccess",
+    "Summary": "Solicita acesso a um sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_0",
+    "RelativePath": "api/systems/",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "GetAllSystems",
+    "Summary": "Lista todos os sistemas cadastrados"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_3",
+    "RelativePath": "api/systems/",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "Systekna.Kernel.Domain.DTOs.CreateSystemRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "CreateSystem",
+    "Summary": "Cria um novo sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_1",
+    "RelativePath": "api/systems/{id:int}",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "GetSystemById",
+    "Summary": "Obt\u00E9m um sistema por ID"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_4",
+    "RelativePath": "api/systems/{id:int}",
+    "HttpMethod": "PUT",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "Systekna.Kernel.Domain.DTOs.UpdateSystemRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "UpdateSystem",
+    "Summary": "Atualiza um sistema existente"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_5",
+    "RelativePath": "api/systems/{id:int}",
+    "HttpMethod": "DELETE",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "DeleteSystem",
+    "Summary": "Exclui um sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_7",
+    "RelativePath": "api/systems/{id:int}/regenerate-secret",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "RegenerateApiSecret",
+    "Summary": "Regenera a chave de API do sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_9",
+    "RelativePath": "api/systems/{id:int}/stats",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "GetSystemStats",
+    "Summary": "Obt\u00E9m estat\u00EDsticas de um sistema espec\u00EDfico"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_6",
+    "RelativePath": "api/systems/{id:int}/toggle-status",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "ToggleSystemStatus",
+    "Summary": "Ativa ou desativa um sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_11",
+    "RelativePath": "api/systems/{systemId:int}/pending",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "systemId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "GetPendingAccessRequests",
+    "Summary": "Lista solicita\u00E7\u00F5es de acesso pendentes de um sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_10",
+    "RelativePath": "api/systems/{systemId:int}/users",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "systemId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "GetSystemUsers",
+    "Summary": "Lista todos os usu\u00E1rios de um sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_13",
+    "RelativePath": "api/systems/access/{accessId:int}",
+    "HttpMethod": "PUT",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "accessId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "Systekna.Kernel.Domain.DTOs.UpdateUserAccessRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "UpdateUserAccess",
+    "Summary": "Atualiza acesso de um usu\u00E1rio"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_14",
+    "RelativePath": "api/systems/access/{accessId:int}",
+    "HttpMethod": "DELETE",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "accessId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "RevokeAccess",
+    "Summary": "Revoga acesso de um usu\u00E1rio"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_15",
+    "RelativePath": "api/systems/access/{accessId:int}/approve",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "accessId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "Systekna.Kernel.Domain.DTOs.ApproveAccessRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "ApproveAccess",
+    "Summary": "Aprova ou rejeita solicita\u00E7\u00E3o de acesso"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_12",
+    "RelativePath": "api/systems/access/grant",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "Systekna.Kernel.Domain.DTOs.GrantSystemAccessRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "GrantSystemAccess",
+    "Summary": "Concede acesso a um usu\u00E1rio em um sistema"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_2",
+    "RelativePath": "api/systems/code/{systemCode}",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "systemCode",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "GetSystemByCode",
+    "Summary": "Obt\u00E9m um sistema por c\u00F3digo"
+  },
+  {
+    "ContainingType": "WbGovAdmin.Endpoints.SystemRegistryEndpoints\u002B\u003C\u003Ec",
+    "Method": "\u003CMapSystemRegistryEndpoints\u003Eb__0_8",
+    "RelativePath": "api/systems/stats",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "System Registry"
+    ],
+    "EndpointName": "GetAllSystemsStats",
+    "Summary": "Obt\u00E9m estat\u00EDsticas de todos os sistemas"
   }
 ]

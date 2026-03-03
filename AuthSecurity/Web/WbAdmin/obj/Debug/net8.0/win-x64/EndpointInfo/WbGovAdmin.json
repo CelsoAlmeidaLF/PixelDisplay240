@@ -5,6 +5,399 @@
     "version": "1.0"
   },
   "paths": {
+    "/api/systems": {
+      "get": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "GetAllSystems",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "CreateSystem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSystemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/{id}": {
+      "get": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "GetSystemById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "UpdateSystem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSystemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "DeleteSystem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/code/{systemCode}": {
+      "get": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "GetSystemByCode",
+        "parameters": [
+          {
+            "name": "systemCode",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/{id}/toggle-status": {
+      "post": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "ToggleSystemStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/{id}/regenerate-secret": {
+      "post": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "RegenerateApiSecret",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/stats": {
+      "get": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "GetAllSystemsStats",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/{id}/stats": {
+      "get": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "GetSystemStats",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/{systemId}/users": {
+      "get": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "GetSystemUsers",
+        "parameters": [
+          {
+            "name": "systemId",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/{systemId}/pending": {
+      "get": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "GetPendingAccessRequests",
+        "parameters": [
+          {
+            "name": "systemId",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/access/grant": {
+      "post": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "GrantSystemAccess",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantSystemAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/access/{accessId}": {
+      "put": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "UpdateUserAccess",
+        "parameters": [
+          {
+            "name": "accessId",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "RevokeAccess",
+        "parameters": [
+          {
+            "name": "accessId",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/systems/access/{accessId}/approve": {
+      "post": {
+        "tags": [
+          "System Registry"
+        ],
+        "operationId": "ApproveAccess",
+        "parameters": [
+          {
+            "name": "accessId",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": [
@@ -692,6 +1085,103 @@
           }
         }
       }
+    },
+    "/api/my-systems": {
+      "get": {
+        "tags": [
+          "User Systems"
+        ],
+        "operationId": "GetMySystems",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/my-systems/request": {
+      "post": {
+        "tags": [
+          "User Systems"
+        ],
+        "operationId": "RequestSystemAccess",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestSystemAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/my-systems/check/{systemCode}": {
+      "get": {
+        "tags": [
+          "User Systems"
+        ],
+        "operationId": "CheckSystemAccess",
+        "parameters": [
+          {
+            "name": "systemCode",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/my-systems/policies/{systemCode}": {
+      "get": {
+        "tags": [
+          "User Systems"
+        ],
+        "operationId": "GetMyPoliciesForSystem",
+        "parameters": [
+          {
+            "name": "systemCode",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/my-systems/available": {
+      "get": {
+        "tags": [
+          "User Systems"
+        ],
+        "operationId": "GetAvailableSystems",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -700,6 +1190,27 @@
         "type": "object",
         "properties": {
           "newPassword": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ApproveAccessRequest": {
+        "type": "object",
+        "properties": {
+          "approve": {
+            "type": "boolean"
+          },
+          "systemRole": {
+            "type": "string",
+            "nullable": true
+          },
+          "grantedPolicies": {
+            "type": "string",
+            "nullable": true
+          },
+          "adminNotes": {
             "type": "string",
             "nullable": true
           }
@@ -716,6 +1227,39 @@
           "newPassword": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateSystemRequest": {
+        "type": "object",
+        "properties": {
+          "systemCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "baseUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "iconUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "availablePolicies": {
+            "type": "string",
+            "nullable": true
+          },
+          "requiresApproval": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -750,6 +1294,28 @@
         "type": "object",
         "properties": {
           "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "GrantSystemAccessRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "systemId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "systemRole": {
+            "type": "string",
+            "nullable": true
+          },
+          "grantedPolicies": {
             "type": "string",
             "nullable": true
           }
@@ -817,6 +1383,24 @@
         },
         "additionalProperties": false
       },
+      "RequestSystemAccessRequest": {
+        "type": "object",
+        "properties": {
+          "systemId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requestedRole": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ResetPasswordRequest": {
         "type": "object",
         "properties": {
@@ -867,6 +1451,62 @@
         "type": "object",
         "properties": {
           "role": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateSystemRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "baseUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "iconUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "availablePolicies": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "requiresApproval": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateUserAccessRequest": {
+        "type": "object",
+        "properties": {
+          "systemRole": {
+            "type": "string",
+            "nullable": true
+          },
+          "grantedPolicies": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "adminNotes": {
             "type": "string",
             "nullable": true
           }

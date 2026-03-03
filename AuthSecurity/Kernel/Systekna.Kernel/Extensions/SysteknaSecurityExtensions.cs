@@ -140,8 +140,9 @@ public static class SysteknaSecurityExtensions
         var context = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
-        // Garantir que o banco esta criado (funciona para InMemory e SQLite)
-        await context.Database.EnsureCreatedAsync();
+        // Garantir que o banco e todas as tabelas estao criados
+        // Para SQLite em desenvolvimento, recria o banco se houver mudancas no schema
+        await EnsureDatabaseSchemaAsync(context);
 
         // Combina todas as policies em uma string separada por ponto e virgula
         var allPolicies = new HashSet<string>(policies)
@@ -326,6 +327,63 @@ public static class SysteknaSecurityExtensions
         if (systemsCreated)
         {
             Console.WriteLine(">>> [SEED] Sistemas padrao criados no banco centralizado.");
+        }
+    }
+
+    /// <summary>
+    /// Garante que o schema do banco de dados esta atualizado.
+    /// Para SQLite em desenvolvimento, verifica se as tabelas existem e recria se necessario.
+    /// </summary>
+    private static async Task EnsureDatabaseSchemaAsync(AuthDbContext context)
+    {
+        var isSqlite = context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+        
+        if (isSqlite)
+        {
+            // Verificar se o banco existe
+            var canConnect = await context.Database.CanConnectAsync();
+            
+            if (canConnect)
+            {
+                // Verificar se todas as tabelas necessarias existem
+                var connection = context.Database.GetDbConnection();
+                var needsRecreation = false;
+                
+                await connection.OpenAsync();
+                
+                try
+                {
+                    using var command = connection.CreateCommand();
+                    command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='RegisteredSystems';";
+                    var result = await command.ExecuteScalarAsync();
+                    
+                    needsRecreation = result == null;
+                }
+                finally
+                {
+                    // Fechar a conexao ANTES de tentar deletar/recriar o banco
+                    await connection.CloseAsync();
+                }
+                
+                if (needsRecreation)
+                {
+                    // Tabela RegisteredSystems nao existe - recriar o banco
+                    Console.WriteLine(">>> [DB] Schema desatualizado detectado. Recriando banco de dados...");
+                    await context.Database.EnsureDeletedAsync();
+                    await context.Database.EnsureCreatedAsync();
+                    Console.WriteLine(">>> [DB] Banco de dados recriado com sucesso.");
+                }
+            }
+            else
+            {
+                // Banco nao existe - criar
+                await context.Database.EnsureCreatedAsync();
+            }
+        }
+        else
+        {
+            // Para outros providers (InMemory, MySQL), usar EnsureCreatedAsync normalmente
+            await context.Database.EnsureCreatedAsync();
         }
     }
 }
