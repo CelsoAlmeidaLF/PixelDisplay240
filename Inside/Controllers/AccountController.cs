@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 
 namespace PixelDisplay240Api.Controllers;
@@ -7,7 +9,7 @@ public class AccountController : Controller
     public IActionResult Login(string? returnUrl = null)
     {
         // Se já estiver autenticado, redireciona para home
-        if (HttpContext.Request.Cookies.ContainsKey("pd240_session"))
+        if (User.Identity?.IsAuthenticated == true)
         {
             return RedirectToAction("Index", "Home");
         }
@@ -16,41 +18,32 @@ public class AccountController : Controller
         return View();
     }
 
-    public IActionResult Register()
-    {
-        return View();
-    }
+    public IActionResult Register() => View();
 
-    public IActionResult ForgotPassword()
-    {
-        return View();
-    }
+    public IActionResult ForgotPassword() => View();
 
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
-        // Remove cookie de sessão se existir
+        // Remove o cookie de autenticação do ASP.NET Core
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        
+        // Remove cookies adicionais se existirem
+        Response.Cookies.Delete("PixelDisplay240.Auth");
+        Response.Cookies.Delete("PixelDisplay240.Token");
         Response.Cookies.Delete("pd240_session");
+        
         return View();
     }
 
-    public IActionResult AccessDenied()
-    {
-        return View();
-    }
+    public IActionResult AccessDenied() => View();
 
     /// <summary>
     /// Página de gerenciamento de conta do usuário
     /// </summary>
-    public IActionResult Profile()
-    {
-        return View();
-    }
+    public IActionResult Profile() => View();
 
     /// <summary>
     /// Página de configurações (chaves de API, preferências)
     /// </summary>
-    public IActionResult Settings()
-    {
-        return View();
-    }
+    public IActionResult Settings() => View();
 }

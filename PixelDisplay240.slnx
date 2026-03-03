@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/.documents/">
     <File Path="DOCUMENTATION.md" />
+    <File Path="SUGGESTED_IMPLEMENTATIONS.md" />
+    <File Path="TECHNICAL_DOCUMENTATION.md" />
   </Folder>
   <Folder Name="/Engineer/">
     <Project Path="AuthSecurity/Kernel/Systekna.Kernel/Systekna.Security.csproj" />

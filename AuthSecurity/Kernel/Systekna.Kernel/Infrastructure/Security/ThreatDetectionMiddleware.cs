@@ -41,8 +41,9 @@ public class ThreatDetectionMiddleware
             return;
         }
 
-        // Detectar padrões de ataque
-        var threatLevel = _threatService.AnalyzeRequest(clientIp, path, method, context.Request.Headers);
+        // Detectar padrões de ataque (inclui query string para análise completa)
+        var queryString = context.Request.QueryString.Value ?? "";
+        var threatLevel = _threatService.AnalyzeRequest(clientIp, path, queryString, method, context.Request.Headers);
 
         if (threatLevel >= ThreatLevel.High)
         {
@@ -96,19 +97,20 @@ public interface IThreatDetectionService
 {
     bool IsBlocked(string identifier);
     void BlockIp(string ip, TimeSpan duration);
-    ThreatLevel AnalyzeRequest(string ip, string path, string method, IHeaderDictionary headers);
+    ThreatLevel AnalyzeRequest(string ip, string path, string queryString, string method, IHeaderDictionary headers);
     void RecordRequest(string ip, string path, string method, string? userId);
     void RecordResponse(string ip, int statusCode);
     ThreatStats GetStats();
 }
 
-public class ThreatDetectionService : IThreatDetectionService
+public class ThreatDetectionService : IThreatDetectionService, IDisposable
 {
     private readonly ConcurrentDictionary<string, BlockInfo> _blockedIps = new();
     private readonly ConcurrentDictionary<string, RequestPattern> _requestPatterns = new();
     private readonly ConcurrentDictionary<string, int> _failedRequests = new();
     private readonly ThreatDetectionOptions _options;
     private readonly Timer _cleanupTimer;
+    private bool _disposed;
 
     // Padrões de ataque conhecidos
     private static readonly string[] SqlInjectionPatterns = {
@@ -163,7 +165,7 @@ public class ThreatDetectionService : IThreatDetectionService
         };
     }
 
-    public ThreatLevel AnalyzeRequest(string ip, string path, string method, IHeaderDictionary headers)
+    public ThreatLevel AnalyzeRequest(string ip, string path, string queryString, string method, IHeaderDictionary headers)
     {
         var score = 0;
 
@@ -186,12 +188,13 @@ public class ThreatDetectionService : IThreatDetectionService
         if (PathTraversalPatterns.Any(p => pathLower.Contains(p)))
             score += 90;
 
-        // Verificar query string
-        var queryString = headers.TryGetValue("Query", out var queryValues) 
-            ? queryValues.ToString().ToLowerInvariant() 
-            : "";
-        if (SqlInjectionPatterns.Any(p => queryString.Contains(p)))
+        // Verificar query string para SQL Injection e XSS
+        var queryLower = queryString.ToLowerInvariant();
+        if (SqlInjectionPatterns.Any(p => queryLower.Contains(p)))
             score += 80;
+        
+        if (XssPatterns.Any(p => queryLower.Contains(p)))
+            score += 70;
 
         // Verificar taxa de requisições
         if (_requestPatterns.TryGetValue(ip, out var pattern))
@@ -314,6 +317,16 @@ public class ThreatDetectionService : IThreatDetectionService
 
         // Limpar contagem de falhas
         _failedRequests.Clear();
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _cleanupTimer?.Dispose();
+            _disposed = true;
+        }
+        GC.SuppressFinalize(this);
     }
 }
 

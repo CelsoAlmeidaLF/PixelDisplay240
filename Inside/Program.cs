@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -82,6 +84,18 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 2,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst
             }));
+    
+    // Rate limiting para exportação (mais restritivo - evita abuso)
+    options.AddPolicy("export", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 1,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
 });
 
 // === CORS ===
@@ -113,24 +127,43 @@ builder.Services.AddPixelDisplayServices(builder.Environment);
 builder.Services.AddAuthorization(options =>
 {
     // PixelDisplay240: Clientes (User) e Administradores podem acessar
-    options.AddPolicy("ClienteOuAdmin", policy => policy.RequireRole("User", "Admin"));
-    options.AddPolicy("PixelDisplayAccess", policy => policy.RequireRole("User", "Admin"));
+    // Aceita tanto Cookie quanto JWT
+    options.AddPolicy("ClienteOuAdmin", policy => 
+    {
+        policy.AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme);
+        policy.RequireRole("User", "Admin");
+    });
+    
+    options.AddPolicy("PixelDisplayAccess", policy => 
+    {
+        policy.AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme);
+        policy.RequireRole("User", "Admin");
+    });
     
     // Políticas granulares baseadas em claims de policy do token JWT
     options.AddPolicy("PixelDisplay.AI", policy => 
+    {
+        policy.AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme);
         policy.RequireAssertion(context =>
             context.User.IsInRole("Admin") || 
-            context.User.HasClaim(c => c.Type == "policy" && c.Value == "PixelDisplay.AI")));
+            context.User.HasClaim(c => c.Type == "policy" && c.Value == "PixelDisplay.AI"));
+    });
     
     options.AddPolicy("PixelDisplay.Export", policy => 
+    {
+        policy.AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme);
         policy.RequireAssertion(context =>
             context.User.IsInRole("Admin") || 
-            context.User.HasClaim(c => c.Type == "policy" && c.Value == "PixelDisplay.Export")));
+            context.User.HasClaim(c => c.Type == "policy" && c.Value == "PixelDisplay.Export"));
+    });
     
     options.AddPolicy("PixelDisplay.Projects", policy => 
+    {
+        policy.AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme);
         policy.RequireAssertion(context =>
             context.User.IsInRole("Admin") || 
-            context.User.HasClaim(c => c.Type == "policy" && c.Value == "PixelDisplay.Projects")));
+            context.User.HasClaim(c => c.Type == "policy" && c.Value == "PixelDisplay.Projects"));
+    });
 });
 builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
@@ -146,7 +179,7 @@ builder.Services.AddWebOptimizer(pipeline =>
         "js/script.js");
 });
 
-// === AUTHENTICATION (JWT) ===
+// === AUTHENTICATION (JWT + Cookie Híbrido) ===
 var jwtKey = builder.Configuration["Jwt:Key"] 
     ?? builder.Configuration["Auth:JwtKey"]
     ?? throw new InvalidOperationException("JWT Key must be configured");
@@ -154,20 +187,53 @@ var jwtKey = builder.Configuration["Jwt:Key"]
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "PixelDisplay240";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "PixelDisplay240Clients";
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+// Configuração de autenticação híbrida: Cookie para Views, JWT para API
+builder.Services.AddAuthentication(options =>
+{
+    // Esquema padrão para páginas (MVC/Razor) = Cookie
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    // Esquema para desafio (redirecionar para login)
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.Cookie.Name = "PixelDisplay240.Auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        ValidateLifetime = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+    
+    // Permitir token via cookie também (para chamadas AJAX das páginas)
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateIssuerSigningKey = true,
-            ValidateLifetime = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-        };
-    });
+            // Tentar ler token do cookie se não vier no header
+            if (string.IsNullOrEmpty(context.Token))
+            {
+                context.Token = context.Request.Cookies["PixelDisplay240.Token"];
+            }
+            return Task.CompletedTask;
+        }
+    };
+});
 
 var app = builder.Build();
 
@@ -259,20 +325,68 @@ api.MapPost("/logs", async (HttpRequest request, ILogService logService) =>
     return Results.Ok();
 });
 
-api.MapPost("/config", async (HttpRequest request, IAgentConfigService configService) =>
+api.MapPost("/config", async (HttpRequest request, IAgentConfigService configService, ILogger<Program> logger) =>
 {
+    // Whitelist de chaves permitidas para configuração
+    var allowedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "GeminiKey",
+        "Theme",
+        "Language",
+        "AutoSave"
+    };
+    
     using var doc = await JsonDocument.ParseAsync(request.Body);
     var root = doc.RootElement;
-    var key = root.GetProperty("Key").GetString();
-    var val = root.GetProperty("Value").GetString();
     
-    if (string.IsNullOrEmpty(key)) return Results.BadRequest("Chave invalida");
+    if (!root.TryGetProperty("Key", out var keyProp) || !root.TryGetProperty("Value", out var valProp))
+    {
+        return Results.BadRequest(new { message = "Payload inválido. Esperado: { Key, Value }" });
+    }
+    
+    var key = keyProp.GetString();
+    var val = valProp.GetString();
+    
+    if (string.IsNullOrWhiteSpace(key))
+    {
+        return Results.BadRequest(new { message = "Chave não pode ser vazia" });
+    }
+    
+    // Validar se a chave está na whitelist
+    if (!allowedKeys.Contains(key))
+    {
+        logger.LogWarning("Tentativa de configurar chave não permitida: {Key}", key);
+        return Results.BadRequest(new { message = $"Chave '{key}' não é permitida. Chaves válidas: {string.Join(", ", allowedKeys)}" });
+    }
+    
+    // Validar tamanho máximo do valor (prevenir payload muito grande)
+    if (val != null && val.Length > 1024)
+    {
+        return Results.BadRequest(new { message = "Valor excede o tamanho máximo permitido (1024 caracteres)" });
+    }
     
     var config = configService.LoadConfig();
-    if (key == "GeminiKey") config.Gemini.ApiKey = val ?? "";
-    configService.SaveConfig(config);
     
-    return Results.Ok(new { message = "Configuracao salva com seguranca!" });
+    switch (key.ToLowerInvariant())
+    {
+        case "geminikey":
+            config.Gemini.ApiKey = val ?? "";
+            break;
+        case "theme":
+            config.Theme = val ?? "dark";
+            break;
+        case "language":
+            config.Language = val ?? "pt-BR";
+            break;
+        case "autosave":
+            config.AutoSave = val?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
+            break;
+    }
+    
+    configService.SaveConfig(config);
+    logger.LogInformation("Configuração '{Key}' atualizada com sucesso", key);
+    
+    return Results.Ok(new { message = "Configuração salva com sucesso!", key });
 });
 
 api.MapGet("/ai/image", async (string prompt, int? seed, IAgentConfigService configService, IAIService aiService) =>
@@ -309,12 +423,31 @@ api.MapGet("/ai/image", async (string prompt, int? seed, IAgentConfigService con
     return Results.File(bytes!, "image/png");
 }).RequireRateLimiting("ai").RequireAuthorization("PixelDisplay.AI");
 
-api.MapPost("/ai/auto-layout", async (HttpRequest request, IAgentConfigService configService, IAIService aiService) =>
+api.MapPost("/ai/auto-layout", async (HttpRequest request, IAgentConfigService configService, IAIService aiService, ILogger<Program> logger) =>
 {
+    // Limitar tamanho do payload para evitar abuso
+    if (request.ContentLength > 100_000) // 100KB máximo
+    {
+        logger.LogWarning("Tentativa de envio de payload muito grande para auto-layout: {Size} bytes", request.ContentLength);
+        return Results.BadRequest(new { message = "Payload muito grande. Máximo permitido: 100KB" });
+    }
+
     using var doc = await JsonDocument.ParseAsync(request.Body);
     var root = doc.RootElement;
-    var elementsJson = root.GetProperty("elements").GetRawText();
+    
+    if (!root.TryGetProperty("elements", out var elementsProperty))
+    {
+        return Results.BadRequest(new { message = "Propriedade 'elements' é obrigatória" });
+    }
+    
+    var elementsJson = elementsProperty.GetRawText();
     var intent = root.TryGetProperty("intent", out var p) ? p.GetString() ?? "" : "";
+    
+    // Validar tamanho do intent
+    if (intent.Length > 500)
+    {
+        return Results.BadRequest(new { message = "Intent muito longo. Máximo: 500 caracteres" });
+    }
 
     var config = configService.LoadConfig();
     var apiKey = config.Gemini.ApiKey?.Trim() ?? string.Empty;
@@ -339,10 +472,20 @@ api.MapPost("/prototype/save", async (HttpRequest request, IPrototypeService ser
     }
 });
 
-api.MapGet("/prototype/export", (IHardwareExportService exportService, IPrototypeService service) => {
+api.MapGet("/prototype/export", (IHardwareExportService exportService, IPrototypeService service, ILogger<Program> logger) => {
     var project = service.GetProject();
+    
+    // Validar se há conteúdo para exportar
+    if (project.Screens.Count == 0)
+    {
+        return Results.BadRequest(new { message = "Projeto vazio. Adicione pelo menos uma tela antes de exportar." });
+    }
+    
+    logger.LogInformation("Exportando projeto com {ScreenCount} telas e {AssetCount} assets", 
+        project.Screens.Count, project.Assets.Count);
+    
     var zipBytes = exportService.GenerateProjectZip(project);
     return Results.File(zipBytes, "application/zip", "PixelDisplay240_Project.zip");
-}).RequireAuthorization("PixelDisplay.Export");
+}).RequireAuthorization("PixelDisplay.Export").RequireRateLimiting("export");
 
 app.Run();

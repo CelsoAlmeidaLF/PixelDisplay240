@@ -400,9 +400,12 @@
                 // Success feedback
                 showMessage('success', 'Login realizado com sucesso!');
 
-                // Redirect
+                // Redirect to returnUrl or home
+                const urlParams = new URLSearchParams(window.location.search);
+                const returnUrl = urlParams.get('returnUrl') || '/';
+                
                 setTimeout(() => {
-                    window.location.href = '/';
+                    window.location.href = returnUrl;
                 }, 500);
 
             } catch (error) {
@@ -426,8 +429,10 @@
         if (token && expires) {
             const expiresDate = new Date(expires);
             if (expiresDate > new Date()) {
-                // Token valido, redirecionar
-                window.location.href = '/';
+                // Token valido, redirecionar para returnUrl ou home
+                const urlParams = new URLSearchParams(window.location.search);
+                const returnUrl = urlParams.get('returnUrl') || '/';
+                window.location.href = returnUrl;
             } else {
                 // Token expirado, limpar storage
                 localStorage.removeItem('pd240_token');

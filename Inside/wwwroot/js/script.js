@@ -1130,6 +1130,10 @@ class ApiClient extends EditorModule {
         throw new Error('refresh_invalid');
     }
 
+    /**
+     * Tenta obter um token válido. NÃO redireciona para login automaticamente.
+     * Retorna null se não houver token válido.
+     */
     async ensureToken() {
         const token = this._getToken();
         
@@ -1142,40 +1146,49 @@ class ApiClient extends EditorModule {
         try {
             return await this._refreshToken();
         } catch (e) {
-            // Se não conseguir renovar, redireciona para login
-            console.warn('[ApiClient] Token inválido ou expirado. Redirecionando para login...');
-            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
-            throw new Error('auth_required');
+            // NÃO redireciona automaticamente - deixa a aplicação decidir
+            console.warn('[ApiClient] Sem token válido. Usuário não autenticado.');
+            return null;
         }
+    }
+
+    /**
+     * Verifica se o usuário está autenticado (tem token válido)
+     */
+    isAuthenticated() {
+        const token = this._getToken();
+        return token && this._isTokenValid(token);
     }
 
     async request(url, options = {}) {
         try {
             const token = await this.ensureToken();
-            const headers = new Headers(options.headers || {});
-            headers.set('Authorization', `Bearer ${token}`);
             
-            const response = await fetch(url, { ...options, headers });
+            // Se não há token, ainda tenta a requisição (para endpoints públicos ou com cookie)
+            const headers = new Headers(options.headers || {});
+            if (token) {
+                headers.set('Authorization', `Bearer ${token}`);
+            }
+            
+            const response = await fetch(url, { ...options, headers, credentials: 'include' });
             
             // Se receber 401 ou 403, pode ser token expirado - tenta renovar uma vez
             if (response.status === 401 || response.status === 403) {
-                try {
-                    const newToken = await this._refreshToken();
-                    headers.set('Authorization', `Bearer ${newToken}`);
-                    return fetch(url, { ...options, headers });
-                } catch {
-                    window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
-                    throw new Error('auth_required');
+                if (token) {
+                    try {
+                        const newToken = await this._refreshToken();
+                        headers.set('Authorization', `Bearer ${newToken}`);
+                        return fetch(url, { ...options, headers, credentials: 'include' });
+                    } catch {
+                        // Falhou ao renovar - retorna a resposta original de erro
+                        console.warn('[ApiClient] Falha ao renovar token');
+                    }
                 }
             }
             
             return response;
         } catch (e) {
-            if (e.message === 'auth_required') {
-                // Já redirecionado
-            } else {
-                console.error('[ApiClient] Request failed:', e.message);
-            }
+            console.error('[ApiClient] Request failed:', e.message);
             throw e;
         }
     }

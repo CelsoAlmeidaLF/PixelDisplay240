@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Systekna.Kernel.Domain.DTOs;
 using Systekna.Kernel.Domain.Entities;
 using Systekna.Kernel.Domain.Interfaces;
@@ -17,6 +18,7 @@ public class AuthService : IAuthService
     private readonly ILoginRateLimiter _rateLimiter;
     private readonly IPasswordValidationService _passwordValidator;
     private readonly IAuditService? _auditService;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         AuthDbContext context, 
@@ -26,6 +28,7 @@ public class AuthService : IAuthService
         IConfiguration configuration,
         ILoginRateLimiter rateLimiter,
         IPasswordValidationService passwordValidator,
+        ILogger<AuthService> logger,
         IAuditService? auditService = null)
     {
         _context = context;
@@ -35,6 +38,7 @@ public class AuthService : IAuthService
         _configuration = configuration;
         _rateLimiter = rateLimiter;
         _passwordValidator = passwordValidator;
+        _logger = logger;
         _auditService = auditService;
     }
 
@@ -157,8 +161,8 @@ public class AuthService : IAuthService
         await _emailService.SendEmailAsync(user.Email, "Verifique seu E-mail - Sistema Systekna", emailBody);
 #else
         // Em DEBUG, apenas loga
-        Console.WriteLine($">>> [DEBUG] Usuario {request.Username} criado e auto-aprovado");
-        Console.WriteLine($">>> [DEBUG] Token de verificacao (nao necessario em DEBUG): {confirmationToken}");
+        _logger.LogDebug("[DEBUG] Usuário {Username} criado e auto-aprovado", request.Username);
+        _logger.LogDebug("[DEBUG] Token de verificação (não necessário em DEBUG): {Token}", confirmationToken);
 #endif
 
         return true;
@@ -202,8 +206,8 @@ public class AuthService : IAuthService
 
 #if DEBUG
         // Em DEBUG, apenas loga o token
-        Console.WriteLine($">>> [DEBUG] Token de recuperacao para {request.Email}: {resetToken}");
-        Console.WriteLine($">>> [DEBUG] Use POST /api/auth/reset-password com {{ \"token\": \"{resetToken}\", \"newPassword\": \"nova_senha\" }}");
+        _logger.LogDebug("[DEBUG] Token de recuperação para {Email}: {Token}", request.Email, resetToken);
+        _logger.LogDebug("[DEBUG] Use POST /api/auth/reset-password com token: {Token}", resetToken);
 #else
         // Em Producao, envia email real
         var baseUrl = _configuration["App:BaseUrl"] ?? "https://localhost";

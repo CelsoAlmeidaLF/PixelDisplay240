@@ -1,5 +1,6 @@
 using System.Text;
 using System.IO.Compression;
+using Microsoft.Extensions.Logging;
 using Systekna.Application.Domain.Entities;
 
 namespace Systekna.Application.Services;
@@ -20,11 +21,39 @@ public interface IHardwareExportService
 /// </summary>
 public class HardwareExportService : IHardwareExportService
 {
+    private readonly ILogger<HardwareExportService> _logger;
+    
+    /// <summary>
+    /// Tamanho máximo permitido para assets (1 MB em bytes).
+    /// </summary>
+    private const int MaxAssetSizeBytes = 1024 * 1024;
+    
+    /// <summary>
+    /// Número máximo de assets por projeto.
+    /// </summary>
+    private const int MaxAssetsPerProject = 50;
+
+    public HardwareExportService(ILogger<HardwareExportService> logger)
+    {
+        _logger = logger;
+    }
+
     /// <summary>
     /// Gera um arquivo ZIP contendo todo o projeto pronto para a Arduino IDE.
     /// </summary>
     public byte[] GenerateProjectZip(PrototypeProject project)
     {
+        _logger.LogInformation("Iniciando exportação de projeto com {ScreenCount} telas e {AssetCount} assets",
+            project.Screens.Count, project.Assets.Count);
+        
+        // Validar número de assets
+        if (project.Assets.Count > MaxAssetsPerProject)
+        {
+            _logger.LogWarning("Projeto excede o limite de {MaxAssets} assets. Total: {AssetCount}", 
+                MaxAssetsPerProject, project.Assets.Count);
+            throw new InvalidOperationException($"Projeto excede o limite de {MaxAssetsPerProject} assets.");
+        }
+        
         using var ms = new MemoryStream();
         using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, true))
         {
@@ -54,15 +83,46 @@ public class HardwareExportService : IHardwareExportService
             // 4. Pasta /data para LittleFS
             foreach (var asset in project.Assets.Where(a => a.StorageType == "littlefs"))
             {
-                var dataEntry = archive.CreateEntry($"data/{asset.Name}.jpg");
-                var bytes = Convert.FromBase64String(ExtractBase64(asset.DataUrl));
-                using (var stream = dataEntry.Open())
+                try
                 {
-                    stream.Write(bytes, 0, bytes.Length);
+                    var base64Data = ExtractBase64(asset.DataUrl);
+                    
+                    // Validar tamanho do asset
+                    if (base64Data.Length > MaxAssetSizeBytes * 1.37) // Base64 é ~37% maior
+                    {
+                        _logger.LogWarning("Asset '{AssetName}' excede o tamanho máximo permitido de {MaxSize} bytes. Ignorando.",
+                            asset.Name, MaxAssetSizeBytes);
+                        continue;
+                    }
+                    
+                    var bytes = Convert.FromBase64String(base64Data);
+                    
+                    if (bytes.Length > MaxAssetSizeBytes)
+                    {
+                        _logger.LogWarning("Asset '{AssetName}' decodificado excede {MaxSize} bytes ({ActualSize} bytes). Ignorando.",
+                            asset.Name, MaxAssetSizeBytes, bytes.Length);
+                        continue;
+                    }
+                    
+                    var dataEntry = archive.CreateEntry($"data/{asset.Name}.jpg");
+                    using (var stream = dataEntry.Open())
+                    {
+                        stream.Write(bytes, 0, bytes.Length);
+                    }
+                    
+                    _logger.LogDebug("Asset '{AssetName}' exportado ({Size} bytes)", asset.Name, bytes.Length);
+                }
+                catch (FormatException ex)
+                {
+                    _logger.LogWarning(ex, "Asset '{AssetName}' possui dados Base64 inválidos. Ignorando.", asset.Name);
                 }
             }
         }
-        return ms.ToArray();
+        
+        var zipBytes = ms.ToArray();
+        _logger.LogInformation("Exportação concluída. Tamanho do ZIP: {Size} bytes", zipBytes.Length);
+        
+        return zipBytes;
     }
 
     public string GenerateMainCode(PrototypeProject project)

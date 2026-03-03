@@ -1,5 +1,8 @@
 @{
     ViewData["Title"] = "Studio";
+    var isAuthenticated = ViewData["IsAuthenticated"] as bool? ?? false;
+    var username = ViewData["Username"] as string ?? "Usuário";
+    var activeMode = ViewData["ActiveMode"] as string ?? "design";
 }
 
 <!-- GLOBAL HEADER -->
@@ -15,8 +18,19 @@
     </div>
 
     <nav class="mode-nav">
-        <button id="nav-design" class="nav-btn active"><i data-lucide="wrench"></i> Design</button>
-        <button id="nav-prototype" class="nav-btn"><i data-lucide="smartphone"></i> Protótipo</button>
+        <button id="nav-design" class="nav-btn @(activeMode == "design" ? "active" : "")"><i data-lucide="wrench"></i> Design</button>
+        @if (isAuthenticated)
+        {
+            <button id="nav-prototype" class="nav-btn @(activeMode == "prototype" ? "active" : "")">
+                <i data-lucide="smartphone"></i> Protótipo
+            </button>
+        }
+        else
+        {
+            <a href="/Account/Login?returnUrl=%2FHome%2FPrototype" class="nav-btn nav-btn-locked" title="Faça login para acessar">
+                <i data-lucide="lock" style="width: 14px; height: 14px;"></i> Protótipo
+            </a>
+        }
     </nav>
 
     <div class="header-actions">
@@ -49,83 +63,167 @@
 
         <div class="divider"></div>
 
-        <!-- User Menu -->
-        <div class="user-menu" id="user-menu">
-            <button id="btn-user-menu" class="secondary-btn icon-btn" title="Usuário">
-                <i data-lucide="user-circle"></i>
-            </button>
-            <div class="user-dropdown" id="user-dropdown">
-                <div class="user-info">
-                    <span class="user-name" id="user-display-name">Usuário</span>
-                    <span class="user-role" id="user-display-role">-</span>
+        @if (isAuthenticated)
+        {
+            <!-- User Menu -->
+            <div class="user-menu" id="user-menu">
+                <button id="btn-user-menu" class="secondary-btn icon-btn" title="Usuário">
+                    <i data-lucide="user-circle"></i>
+                </button>
+                <div class="user-dropdown" id="user-dropdown">
+                    <div class="user-info">
+                        <span class="user-name">@username</span>
+                        <span class="user-role" id="user-display-role">Usuário</span>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="/Account/Profile" class="dropdown-item">
+                        <i data-lucide="user-cog"></i> Minha Conta
+                    </a>
+                    <a href="/Account/Profile#api-keys" class="dropdown-item">
+                        <i data-lucide="key"></i> Chaves de API
+                    </a>
+                    <a href="/Account/Settings" class="dropdown-item">
+                        <i data-lucide="settings-2"></i> Configurações
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="/Account/Logout" class="dropdown-item">
+                        <i data-lucide="log-out"></i> Sair
+                    </a>
                 </div>
-                <div class="dropdown-divider"></div>
-                <a href="/Account/Profile" class="dropdown-item">
-                    <i data-lucide="user-cog"></i> Minha Conta
-                </a>
-                <a href="/Account/Profile#api-keys" class="dropdown-item">
-                    <i data-lucide="key"></i> Chaves de API
-                </a>
-                <a href="/Account/Settings" class="dropdown-item">
-                    <i data-lucide="settings-2"></i> Configurações
-                </a>
-                <div class="dropdown-divider"></div>
-                <a href="/Account/Logout" class="dropdown-item">
-                    <i data-lucide="log-out"></i> Sair
-                </a>
             </div>
-        </div>
+        }
+        else
+        {
+            <!-- Login Button -->
+            <a href="/Account/Login?returnUrl=/Home/Prototype" class="primary-btn small-btn" style="text-decoration: none;">
+                <i data-lucide="log-in"></i> Entrar
+            </a>
+        }
     </div>
 </header>
 
 <main id="main-views">
     @await Html.PartialAsync("_DesignView")
-    @await Html.PartialAsync("_PrototypeView")
-    @await Html.PartialAsync("_HardwareView")
+    
+    @if (isAuthenticated)
+    {
+        @await Html.PartialAsync("_PrototypeView")
+        @await Html.PartialAsync("_HardwareView")
+    }
+    else
+    {
+        <!-- Placeholder para Protótipo quando não autenticado -->
+        <div id="prototype-view" class="view-panel">
+            <div class="auth-required-overlay">
+                <div class="auth-required-content">
+                    <i data-lucide="lock" style="width: 64px; height: 64px; color: var(--primary);"></i>
+                    <h2>Área de Prototipagem</h2>
+                    <p>Faça login para acessar a funcionalidade de prototipagem de interfaces TFT.</p>
+                    <a href="/Account/Login?returnUrl=/Home/Prototype" class="primary-btn">
+                        <i data-lucide="log-in"></i> Fazer Login
+                    </a>
+                    <p style="margin-top: 16px; font-size: 0.8rem; color: var(--text-muted);">
+                        Não tem uma conta? <a href="/Account/Register?returnUrl=/Home/Prototype" style="color: var(--primary);">Registre-se gratuitamente</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
 </main>
 
 @await Html.PartialAsync("_Footer")
 @await Html.PartialAsync("_Modals")
 
 @section Scripts {
+    <style>
+        .nav-btn-locked {
+            opacity: 0.7;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-btn-locked:hover {
+            background: var(--primary-hover) !important;
+            opacity: 1;
+        }
+        .auth-required-overlay {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: var(--bg);
+        }
+        .auth-required-content {
+            text-align: center;
+            padding: 48px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            max-width: 400px;
+        }
+        .auth-required-content h2 {
+            margin: 16px 0 8px;
+            color: var(--text);
+        }
+        .auth-required-content p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+    </style>
+
     <script>
         // Emergency icon reload
         window.addEventListener('load', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
         });
 
-        // User Menu Toggle
-        document.getElementById('btn-user-menu')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            document.getElementById('user-dropdown').classList.toggle('show');
-        });
+        @if (isAuthenticated)
+        {
+            <text>
+            // User Menu Toggle
+            document.getElementById('btn-user-menu')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('user-dropdown').classList.toggle('show');
+            });
 
-        document.addEventListener('click', () => {
-            document.getElementById('user-dropdown')?.classList.remove('show');
-        });
+            document.addEventListener('click', () => {
+                document.getElementById('user-dropdown')?.classList.remove('show');
+            });
 
-        // Load user info from storage
-        (function loadUserInfo() {
-            const userJson = localStorage.getItem('pd240_user') || sessionStorage.getItem('pd240_user');
-            if (userJson) {
-                try {
-                    const user = JSON.parse(userJson);
-                    document.getElementById('user-display-name').textContent = user.username || 'Usuário';
-                    document.getElementById('user-display-role').textContent = user.role || '-';
-                } catch (e) {
-                    console.warn('Failed to parse user info');
+            // Carregar role do usuário do localStorage (se disponível)
+            (function loadUserRole() {
+                const userJson = localStorage.getItem('pd240_user') || sessionStorage.getItem('pd240_user');
+                if (userJson) {
+                    try {
+                        const user = JSON.parse(userJson);
+                        const roleEl = document.getElementById('user-display-role');
+                        if (roleEl && user.role) roleEl.textContent = user.role;
+                    } catch (e) {}
                 }
-            }
-        })();
+            })();
+            </text>
+        }
 
-        // Check authentication on page load
-        (function checkAuth() {
-            const token = localStorage.getItem('pd240_token') || sessionStorage.getItem('pd240_token');
-            if (!token) {
-                // Redirect to login if not authenticated
-                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
-            }
-        })();
+        @if (activeMode == "prototype" && isAuthenticated)
+        {
+            <text>
+            // Ativar aba de protótipo automaticamente
+            document.addEventListener('DOMContentLoaded', function() {
+                const protoBtn = document.getElementById('nav-prototype');
+                const designBtn = document.getElementById('nav-design');
+                const protoView = document.getElementById('prototype-view');
+                const designView = document.getElementById('design-view');
+                
+                if (protoBtn && designBtn && protoView && designView) {
+                    designBtn.classList.remove('active');
+                    protoBtn.classList.add('active');
+                    designView.classList.remove('active');
+                    protoView.classList.add('active');
+                }
+            });
+            </text>
+        }
     </script>
 }
 

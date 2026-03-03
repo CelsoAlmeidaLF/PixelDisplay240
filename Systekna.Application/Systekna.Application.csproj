@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Systekna.Application</RootNamespace>
-    <Description>Camada de aplicação do PixelDisplay240 - Domínio, Serviços e DTOs</Description>
+    <Description>Camada de aplicaï¿½ï¿½o do PixelDisplay240 - Domï¿½nio, Serviï¿½os e DTOs</Description>
   </PropertyGroup>
 
   <ItemGroup>

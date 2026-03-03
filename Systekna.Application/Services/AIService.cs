@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 
 namespace Systekna.Application.Services;
 
@@ -18,11 +19,13 @@ public interface IAIService
 public class AIService : IAIService
 {
     private readonly HttpClient _httpClient;
+    private readonly ILogger<AIService> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public AIService(HttpClient httpClient)
+    public AIService(HttpClient httpClient, ILogger<AIService> logger)
     {
         _httpClient = httpClient;
+        _logger = logger;
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
         _httpClient.Timeout = TimeSpan.FromSeconds(60);
     }
@@ -31,6 +34,7 @@ public class AIService : IAIService
     {
         if (string.IsNullOrWhiteSpace(apiKey))
         {
+            _logger.LogWarning("Tentativa de gerar imagem sem API key configurada");
             return (false, null, "Gemini API key not configured");
         }
 
@@ -38,10 +42,11 @@ public class AIService : IAIService
         try
         {
             finalPrompt = await ImprovePromptWithGemini(apiKey, prompt);
+            _logger.LogDebug("Prompt melhorado: {FinalPrompt}", finalPrompt);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[AI] Gemini prompt enhancement failed: {ex.Message}");
+            _logger.LogWarning(ex, "Falha ao melhorar prompt com Gemini, usando prompt original");
         }
 
         var pixelPrompt = $"pixel art, 1:1 square, low resolution, limited color palette, crisp edges, no gradients, {finalPrompt}";
@@ -66,36 +71,38 @@ public class AIService : IAIService
         };
         request.Headers.Add("x-goog-api-key", apiKey);
 
-        using var response = await _httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorBody = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"[AI] Gemini error {response.StatusCode}: {errorBody}");
-            return (false, null, errorBody);
-        }
-
-        var responseText = await response.Content.ReadAsStringAsync();
         try
         {
+            using var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Gemini API retornou erro {StatusCode}: {Error}", response.StatusCode, errorBody);
+                return (false, null, errorBody);
+            }
+
+            var responseText = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(responseText);
+            
             if (TryExtractImageBytes(doc.RootElement, out var bytes))
             {
+                _logger.LogInformation("Imagem gerada com sucesso ({Size} bytes)", bytes.Length);
                 return (true, bytes, null);
             }
 
-            Console.WriteLine("[AI] No image bytes found in response");
+            _logger.LogWarning("Resposta do Gemini não contém bytes de imagem");
             return (false, null, "No image bytes found");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[AI] Failed to parse response: {ex.Message}");
+            _logger.LogError(ex, "Erro ao processar resposta do Gemini");
             return (false, null, "Failed to parse response");
         }
     }
 
     private async Task<string> ImprovePromptWithGemini(string apiKey, string prompt)
     {
-        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+        var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
         var requestBody = new
         {
             contents = new[]
@@ -104,7 +111,13 @@ public class AIService : IAIService
             }
         };
 
-        var response = await _httpClient.PostAsJsonAsync(url, requestBody, _jsonOptions);
+        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = JsonContent.Create(requestBody, options: _jsonOptions)
+        };
+        request.Headers.Add("x-goog-api-key", apiKey);
+
+        var response = await _httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode) return prompt;
 
         var data = await response.Content.ReadFromJsonAsync<JsonElement>(_jsonOptions);
@@ -250,6 +263,7 @@ public class AIService : IAIService
     {
         if (string.IsNullOrWhiteSpace(apiKey))
         {
+            _logger.LogWarning("Tentativa de otimizar layout sem API key configurada");
             return (false, null, "Gemini API key not configured");
         }
 
@@ -266,7 +280,7 @@ public class AIService : IAIService
 
         var userPrompt = $"Aqui está a lista de elementos atuais (JSON):\n{elementsJson}\n\nIntenção da Tela: {screenIntent}\n\nPor favor, otimize o layout:";
 
-        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+        var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
         var requestBody = new
         {
             contents = new[]
@@ -277,10 +291,19 @@ public class AIService : IAIService
 
         try
         {
-            var response = await _httpClient.PostAsJsonAsync(url, requestBody, _jsonOptions);
+            _logger.LogDebug("Enviando requisição de otimização de layout para Gemini");
+            
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = JsonContent.Create(requestBody, options: _jsonOptions)
+            };
+            request.Headers.Add("x-goog-api-key", apiKey);
+            
+            var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Gemini API retornou erro na otimização: {Error}", errorBody);
                 return (false, null, $"Gemini API Error: {errorBody}");
             }
 
@@ -302,10 +325,12 @@ public class AIService : IAIService
                 if (resultText.EndsWith("```")) resultText = resultText.Substring(0, resultText.Length - 3);
             }
 
+            _logger.LogInformation("Layout otimizado com sucesso");
             return (true, resultText.Trim(), null);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Erro ao otimizar layout com Gemini");
             return (false, null, ex.Message);
         }
     }

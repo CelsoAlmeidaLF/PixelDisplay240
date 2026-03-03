@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Systekna.Application.Services;
 
 namespace Systekna.Application.Extensions;
 
@@ -20,20 +22,23 @@ public static class PixelDisplayServiceExtensions
         string configPath,
         string logsPath)
     {
-        // Serviços de domínio
-        services.AddSingleton<Services.IPrototypeService, Services.PrototypeService>();
-        services.AddSingleton<Services.IHardwareExportService, Services.HardwareExportService>();
+        // Serviços de domínio (agora com suporte a ILogger via DI)
+        services.AddSingleton<IPrototypeService, PrototypeService>();
+        services.AddSingleton<IHardwareExportService, HardwareExportService>();
 
         // Serviços de configuração
-        services.AddSingleton<Services.IAgentConfigService>(sp =>
-            new Services.AgentConfigService(configPath));
+        services.AddSingleton<IAgentConfigService>(sp =>
+            new AgentConfigService(configPath));
 
         // Serviços de log
-        services.AddSingleton<Services.ILogService>(sp =>
-            new Services.LogService(logsPath));
+        services.AddSingleton<ILogService>(sp =>
+            new LogService(logsPath));
 
-        // Serviço de IA (requer HttpClient)
-        services.AddHttpClient<Services.IAIService, Services.AIService>(client =>
+        // Serviço de persistência de projetos
+        services.AddSingleton<IProjectPersistenceService, FileProjectPersistenceService>();
+
+        // Serviço de IA (requer HttpClient e ILogger)
+        services.AddHttpClient<IAIService, AIService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(60);
         });

@@ -13,11 +13,12 @@ public interface ILoginRateLimiter
     LoginAttemptInfo GetAttemptInfo(string identifier);
 }
 
-public class LoginRateLimiter : ILoginRateLimiter
+public class LoginRateLimiter : ILoginRateLimiter, IDisposable
 {
     private readonly ConcurrentDictionary<string, LoginAttemptInfo> _attempts = new();
     private readonly RateLimitPolicy _policy;
     private readonly Timer _cleanupTimer;
+    private bool _disposed;
 
     public LoginRateLimiter(RateLimitPolicy? policy = null)
     {
@@ -130,6 +131,16 @@ public class LoginRateLimiter : ILoginRateLimiter
         {
             _attempts.TryRemove(key, out _);
         }
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _cleanupTimer?.Dispose();
+            _disposed = true;
+        }
+        GC.SuppressFinalize(this);
     }
 }
 

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Systekna.Application.DTOs;
 using Systekna.Kernel.Application.Services;
 using Systekna.Kernel.Domain.DTOs;
@@ -49,6 +51,37 @@ public static class AuthEndpoints
                         new { error = "Seu perfil não tem permissão para acessar o PixelDisplay240." },
                         statusCode: StatusCodes.Status403Forbidden);
                 }
+
+                // === CRIAR COOKIE DE AUTENTICAÇÃO ===
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, response.Username),
+                    new Claim(ClaimTypes.Email, response.Email),
+                    new Claim(ClaimTypes.Role, response.Role),
+                    new Claim(JwtRegisteredClaimNames.UniqueName, response.Username)
+                };
+                
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7),
+                    AllowRefresh = true
+                };
+                
+                await context.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties);
+
+                // Também salvar o JWT em um cookie HttpOnly para chamadas de API
+                context.Response.Cookies.Append("PixelDisplay240.Token", response.Token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = context.Request.IsHttps,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7)
+                });
 
                 await auditService.LogAsync("LOGIN_SUCCESS", request.Username, $"Login bem-sucedido. Role: {response.Role}", ip, userAgent);
 
@@ -226,17 +259,28 @@ public static class AuthEndpoints
         // ==========================================
         // LOGOUT
         // ==========================================
-        group.MapPost("/logout", () =>
+        group.MapPost("/logout", async (HttpContext context) =>
         {
-            // JWT é stateless - o logout é feito removendo o token no cliente
+            // Remover cookie de autenticação
+            await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            
+            // Remover cookie do JWT
+            context.Response.Cookies.Delete("PixelDisplay240.Token");
+            context.Response.Cookies.Delete("PixelDisplay240.Auth");
+            
             return Results.Ok(new { message = "Logout realizado com sucesso." });
-        }).RequireAuthorization().WithName("Logout");
+        }).WithName("Logout");
 
         // ==========================================
-        // VALIDAR TOKEN
+        // VALIDAR TOKEN / SESSÃO
         // ==========================================
         group.MapGet("/validate", (ClaimsPrincipal user) =>
         {
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                return Results.Unauthorized();
+            }
+            
             var username = user.Identity?.Name ?? user.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value;
             var role = user.FindFirst(ClaimTypes.Role)?.Value;
 
@@ -245,7 +289,7 @@ public static class AuthEndpoints
                 valid = true,
                 username,
                 role,
-                message = "Token válido"
+                message = "Sessão válida"
             });
         }).RequireAuthorization().WithName("ValidateToken");
     }

@@ -138,9 +138,9 @@
                     Voce foi desconectado com seguranca.<br>
                     Obrigado por usar o PixelDisplay240!
                 </p>
-                <a href="/Account/Login" class="btn-login">
-                    <i data-lucide="log-in"></i>
-                    <span>Fazer Login Novamente</span>
+                <a href="/" class="btn-login">
+                    <i data-lucide="palette"></i>
+                    <span>Voltar ao Designer</span>
                 </a>
                 <p class="countdown">Redirecionando em <span id="countdown">5</span> segundos...</p>
             </div>
@@ -154,14 +154,24 @@
     <script>
         lucide.createIcons();
 
-        // Clear all stored tokens
+        // Clear all stored tokens (including refresh tokens)
         function clearSession() {
+            // LocalStorage
             localStorage.removeItem('pd240_token');
+            localStorage.removeItem('pd240_refresh_token');
             localStorage.removeItem('pd240_expires');
             localStorage.removeItem('pd240_user');
+            
+            // SessionStorage
             sessionStorage.removeItem('pd240_token');
+            sessionStorage.removeItem('pd240_refresh_token');
             sessionStorage.removeItem('pd240_expires');
             sessionStorage.removeItem('pd240_user');
+            
+            // Limpar também dados do editor (opcional, para logout completo)
+            localStorage.removeItem('pixeldisplay_layout');
+            localStorage.removeItem('pixeldisplay240_logs');
+            localStorage.removeItem('pixeldisplay240_access_key');
         }
 
         // Perform logout
@@ -183,7 +193,7 @@
                 countdownEl.textContent = seconds;
                 if (seconds <= 0) {
                     clearInterval(interval);
-                    window.location.href = '/Account/Login';
+                    window.location.href = '/';
                 }
             }, 1000);
         }

@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Camada de aplica��o do PixelDisplay240 - Dom�nio, Servi�os e DTOs")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c9c36d70c6a357e799f2487bd92f4e4ebc5af345")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+367911388c03b90c2cecd626305dbe722c3b5cdd")]
 [assembly: System.Reflection.AssemblyProductAttribute("Systekna.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Systekna.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

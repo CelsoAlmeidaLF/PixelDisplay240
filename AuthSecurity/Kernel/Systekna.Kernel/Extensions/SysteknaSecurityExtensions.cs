@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Systekna.Kernel.Application.Services;
 using Systekna.Kernel.Domain.Entities;
 using Systekna.Kernel.Domain.Interfaces;
@@ -127,6 +128,18 @@ public static class SysteknaSecurityExtensions
         services.AddScoped<IGovernanceService, GovernanceService>();
         services.AddScoped<IVpsManagerService, VpsManagerService>();
         services.AddScoped<ISystemRegistryService, SystemRegistryService>();
+    }
+
+    /// <summary>
+    /// Adiciona health checks do Systekna.Security
+    /// </summary>
+    public static IHealthChecksBuilder AddSysteknaHealthChecks(this IHealthChecksBuilder builder)
+    {
+        builder.AddCheck<DatabaseHealthCheck>("database", tags: new[] { "db", "ready" });
+        builder.AddCheck<SecurityServicesHealthCheck>("security", tags: new[] { "security" });
+        builder.AddCheck<SystemResourcesHealthCheck>("resources", tags: new[] { "resources" });
+        
+        return builder;
     }
 
     /// <summary>
