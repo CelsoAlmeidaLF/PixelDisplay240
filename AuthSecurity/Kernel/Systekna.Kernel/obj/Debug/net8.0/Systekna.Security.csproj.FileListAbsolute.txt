@@ -1,0 +1,13 @@
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\bin\Debug\net8.0\Systekna.Security.deps.json
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\bin\Debug\net8.0\Systekna.Security.dll
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\bin\Debug\net8.0\Systekna.Security.pdb
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\Systekna.Security.csproj.AssemblyReference.cache
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\Systekna.Security.GeneratedMSBuildEditorConfig.editorconfig
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\Systekna.Security.AssemblyInfoInputs.cache
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\Systekna.Security.AssemblyInfo.cs
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\Systekna.Security.csproj.CoreCompileInputs.cache
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\Systekna.Security.sourcelink.json
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\Systekna.Security.dll
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\refint\Systekna.Security.dll
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\Systekna.Security.pdb
+H:\.NET CORE 8\WEB & API\WbPixelDisplay240\PixelDisplay240-Inside\AuthSecurity\Kernel\Systekna.Kernel\obj\Debug\net8.0\ref\Systekna.Security.dll

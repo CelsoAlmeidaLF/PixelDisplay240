@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WbAuth - Portal do Cliente</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    if (!localStorage.getItem('api_token')) {
+      window.location.href = '/login.html';
+    }
+  </script>
+</head>
+
+<body class="dashboard-grid" style="display: none;">
+
+  <header class="glass-panel" style="border-radius: 0; border: none; border-bottom: 1px solid var(--glass-border);">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <i data-lucide="menu" style="cursor: pointer; color: var(--text-muted);"></i>
+      <h2 style="margin: 0; font-size: 1.2rem;">Portal do Cliente</h2>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+      <div id="user-info" style="text-align: right;">
+        <div style="font-weight: 600; font-size: 0.9rem;">Cliente</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">Acesso Padrão</div>
+      </div>
+      <div id="user-badge" class="glass-panel"
+        style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--primary-color);">
+        <i data-lucide="user" style="width: 20px;"></i>
+      </div>
+    </div>
+  </header>
+
+  <aside class="glass-panel" style="border-radius: 0; border: none; border-right: 1px solid var(--glass-border);">
+    <div
+      style="font-size: 1.5rem; font-weight: 700; margin-bottom: 3rem; display: flex; align-items: center; gap: 10px;">
+      <div style="width: 32px; height: 32px; background: var(--primary-color); border-radius: 8px;"></div>
+      WbAuth
+    </div>
+
+    <nav style="display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1;">
+      <div class="nav-link active">
+        <i data-lucide="layout-dashboard"></i>
+        Visão Geral
+      </div>
+      <div class="nav-link">
+        <i data-lucide="user-cog"></i>
+        Meus Dados
+      </div>
+      <div class="nav-link">
+        <i data-lucide="key"></i>
+        Chaves de API
+      </div>
+      <div class="nav-link">
+        <i data-lucide="shield-check"></i>
+        Segurança
+      </div>
+      <div class="nav-link">
+        <i data-lucide="customer-service"></i>
+        Suporte
+      </div>
+    </nav>
+
+    <div style="padding-top: 2rem; border-top: 1px solid var(--glass-border);">
+      <div id="btnLogout" class="nav-link" style="color: #ff453a;">
+        <i data-lucide="log-out"></i>
+        Sair
+      </div>
+    </div>
+  </aside>
+
+  <section class="main-content">
+    <div style="margin-bottom: 2.5rem;">
+      <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Olá, <span id="client-name">Usuário</span></h1>
+      <p style="color: var(--text-muted);">Gerencie sua conta e visualize suas integrações.</p>
+    </div>
+
+    <div class="stats-cards">
+      <div class="stat-item glass-panel">
+        <div class="stat-label">Uso de API (Mês)</div>
+        <div class="stat-value">845 / 5.000</div>
+        <div style="font-size: 0.8rem; color: #34c759; margin-top: 0.5rem;">17% do limite utilizado</div>
+      </div>
+      <div class="stat-item glass-panel">
+        <div class="stat-label">Apps Conectados</div>
+        <div class="stat-value">3</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Todos ativos</div>
+      </div>
+      <div class="stat-item glass-panel">
+        <div class="stat-label">Plano Atual</div>
+        <div class="stat-value" style="color: var(--primary);">Developer</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Renova em 15 dias</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+      <div class="glass-panel" style="padding: 2.5rem;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
+          <div style="background: var(--primary); padding: 10px; border-radius: 10px;">
+            <i data-lucide="shield-lock" style="color: var(--bg-dark);"></i>
+          </div>
+          <h3 style="margin: 0;">Segurança da Conta</h3>
+        </div>
+
+        <div id="change-pass-form">
+          <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            Mantenha sua senha atualizada para garantir a segurança dos seus dados.
+          </p>
+
+          <div class="form-group">
+            <label>Senha Atual</label>
+            <input id="old-password" type="password" placeholder="••••••••">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label>Nova Senha</label>
+              <input id="new-password" type="password" placeholder="Mínimo 8 caracteres">
+            </div>
+            <div class="form-group">
+              <label>Confirmar Nova Senha</label>
+              <input id="confirm-password" type="password" placeholder="Repita a nova senha">
+            </div>
+          </div>
+
+          <button id="btnChangePassword"
+            style="margin-top: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <i data-lucide="refresh-cw" style="width: 18px;"></i>
+            Atualizar Senha
+          </button>
+
+          <div id="pass-msg"
+            style="margin-top: 1rem; padding: 10px; border-radius: 8px; font-size: 0.85rem; display: none;"></div>
+        </div>
+      </div>
+
+      <div class="glass-panel" style="padding: 2.5rem;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
+          <div style="background: var(--accent); padding: 10px; border-radius: 10px;">
+            <i data-lucide="activity" style="color: var(--bg-dark);"></i>
+          </div>
+          <h3 style="margin: 0;">Sua Sessão</h3>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <label>Último Acesso</label>
+          <div
+            style="font-size: 0.9rem; color: var(--text-main); background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);">
+            Hoje, às <span id="last-login-time">13:15</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span>Expiração do Token:</span>
+            <span id="token-expiry">--:--</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Tipo de Conta:</span>
+            <span id="user-role-label" style="color: var(--primary);">Cliente</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="glass-panel" style="border-radius: 0; border: none; border-top: 1px solid var(--glass-border);">
+    &copy; 2026 WbAuth - Portal do Cliente. Todos os direitos reservados.
+  </footer>
+
+  <script src="/js/admin.js"></script>
+  <script>
+    // Inicializar ícones
+    lucide.createIcons();
+  </script>
+</body>
+
+</html>

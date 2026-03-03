@@ -1,0 +1,314 @@
+@{
+    ViewData["Title"] = "Cadastro";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - PixelDisplay240</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --border-color: #475569;
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(ellipse at top, rgba(59, 130, 246, 0.1), transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(139, 92, 246, 0.1), transparent 50%);
+        }
+
+        .register-container { width: 100%; max-width: 420px; }
+
+        .register-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .logo-section { text-align: center; margin-bottom: 32px; }
+
+        .logo-icon-box {
+            width: 64px; height: 64px;
+            background: var(--accent-gradient);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .logo-icon-box i { width: 32px; height: 32px; color: white; }
+
+        .logo-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .logo-title span { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .logo-subtitle { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); letter-spacing: 2px; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; }
+
+        .input-wrapper { position: relative; }
+        .input-wrapper i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-muted); }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px 12px 44px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        .form-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .form-input::placeholder { color: var(--text-muted); }
+        .form-input.error { border-color: var(--error); }
+        .form-input.success { border-color: var(--success); }
+
+        .password-strength { margin-top: 8px; }
+        .strength-bar { height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; }
+        .strength-fill { height: 100%; width: 0; transition: all 0.3s; }
+        .strength-text { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+        .btn-register {
+            width: 100%; padding: 14px;
+            background: var(--accent-gradient);
+            border: none; border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem; font-weight: 600; color: white;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.2s;
+            margin-top: 24px;
+        }
+
+        .btn-register:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3); }
+        .btn-register:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        .btn-register i { width: 18px; height: 18px; }
+
+        .divider { display: flex; align-items: center; margin: 24px 0; color: var(--text-muted); font-size: 0.8rem; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border-color); }
+        .divider span { padding: 0 12px; }
+
+        .login-link { text-align: center; font-size: 0.9rem; color: var(--text-secondary); }
+        .login-link a { color: var(--accent-primary); text-decoration: none; font-weight: 500; }
+        .login-link a:hover { text-decoration: underline; }
+
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.875rem; display: none; }
+        .alert-error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: var(--error); }
+        .alert-success { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); color: var(--success); }
+        .alert.show { display: flex; align-items: center; gap: 8px; }
+
+        .spinner { width: 18px; height: 18px; border: 2px solid transparent; border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+
+        .footer-text { text-align: center; margin-top: 24px; font-size: 0.75rem; color: var(--text-muted); }
+        .terms { font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 16px; }
+        .terms a { color: var(--accent-primary); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card">
+            <div class="logo-section">
+                <div class="logo-icon-box">
+                    <i data-lucide="palette"></i>
+                </div>
+                <h1 class="logo-title">PixelDisplay240 <span>PRO</span></h1>
+                <p class="logo-subtitle">CRIAR CONTA</p>
+            </div>
+
+            <div id="alert-error" class="alert alert-error">
+                <i data-lucide="alert-circle"></i>
+                <span id="error-message"></span>
+            </div>
+
+            <div id="alert-success" class="alert alert-success">
+                <i data-lucide="check-circle"></i>
+                <span id="success-message"></span>
+            </div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label class="form-label">Nome de Usuario</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="username" class="form-input" placeholder="Escolha um nome de usuario" required minlength="3" maxlength="50">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="email" class="form-input" placeholder="seu@email.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Senha</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="password" class="form-input" placeholder="Minimo 8 caracteres" required minlength="8">
+                    </div>
+                    <div class="password-strength">
+                        <div class="strength-bar"><div id="strength-fill" class="strength-fill"></div></div>
+                        <p id="strength-text" class="strength-text"></p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirmar Senha</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="confirm-password" class="form-input" placeholder="Digite a senha novamente" required>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit" class="btn-register">
+                    <i data-lucide="user-plus"></i>
+                    <span>Criar Conta</span>
+                </button>
+
+                <p class="terms">
+                    Ao criar uma conta, voce concorda com nossos<br>
+                    <a href="#">Termos de Uso</a> e <a href="#">Politica de Privacidade</a>
+                </p>
+            </form>
+
+            <div class="divider"><span>ou</span></div>
+
+            <p class="login-link">
+                Ja tem uma conta? <a href="/Account/Login">Fazer login</a>
+            </p>
+        </div>
+
+        <p class="footer-text">
+            &copy; 2025 PixelDisplay240. Todos os direitos reservados.
+        </p>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // API de autenticacao interna
+        const AUTH_API_URL = '/api/auth';
+
+        // Password strength checker
+        document.getElementById('password').addEventListener('input', (e) => {
+            const password = e.target.value;
+            const fill = document.getElementById('strength-fill');
+            const text = document.getElementById('strength-text');
+
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+            const colors = ['var(--error)', 'var(--warning)', 'var(--warning)', 'var(--success)'];
+            const labels = ['Fraca', 'Regular', 'Boa', 'Forte'];
+
+            fill.style.width = `${strength * 25}%`;
+            fill.style.background = colors[strength - 1] || 'var(--bg-tertiary)';
+            text.textContent = password.length > 0 ? `Forca: ${labels[strength - 1] || 'Muito fraca'}` : '';
+        });
+
+        // Confirm password validation
+        document.getElementById('confirm-password').addEventListener('input', (e) => {
+            const password = document.getElementById('password').value;
+            e.target.classList.toggle('error', e.target.value !== password && e.target.value.length > 0);
+            e.target.classList.toggle('success', e.target.value === password && e.target.value.length > 0);
+        });
+
+        // Form submission
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById('btn-submit');
+            const alertError = document.getElementById('alert-error');
+            const alertSuccess = document.getElementById('alert-success');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Reset alerts
+            alertError.classList.remove('show');
+            alertSuccess.classList.remove('show');
+
+            // Validation
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'As senhas nao coincidem';
+                alertError.classList.add('show');
+                return;
+            }
+
+            // Loading state
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div><span>Criando conta...</span>';
+
+            try {
+                const response = await fetch(`${AUTH_API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erro ao criar conta');
+                }
+
+                // Success
+                alertSuccess.classList.add('show');
+                successMessage.textContent = data.message || 'Conta criada com sucesso!';
+
+                // Redirect to login
+                setTimeout(() => {
+                    window.location.href = '/Account/Login';
+                }, 2000);
+
+            } catch (error) {
+                errorMessage.textContent = error.message;
+                alertError.classList.add('show');
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="user-plus"></i><span>Criar Conta</span>';
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>

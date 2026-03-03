@@ -1,0 +1,47 @@
+@{
+    ViewData["Title"] = "Acesso Negado";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Acesso Negado | PixelDisplay240</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/account.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="access-denied-container">
+    <div class="access-denied-content">
+        <div class="access-denied-icon">
+            <i data-lucide="shield-x" style="width: 60px; height: 60px;"></i>
+        </div>
+        
+        <h1>Acesso Negado</h1>
+        
+        <p>
+            Você não tem permissão para acessar esta página ou recurso.
+            <br>
+            Se você acredita que isso é um erro, entre em contato com o administrador.
+        </p>
+
+        <a href="/" class="btn btn-primary">
+            <i data-lucide="home"></i>
+            Voltar ao Início
+        </a>
+
+        <div class="access-denied-links">
+            <a href="/Account/Login">Fazer Login</a>
+            <a href="/Account/Profile">Minha Conta</a>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

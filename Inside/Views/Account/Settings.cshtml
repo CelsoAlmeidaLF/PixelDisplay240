@@ -1,0 +1,168 @@
+@{
+    ViewData["Title"] = "Configurações";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Configurações | PixelDisplay240</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/account.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="container" style="padding: 2rem;">
+        <div class="header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; padding: 0; background: none; border: none; position: static;">
+            <h1 style="font-size: 1.75rem; display: flex; align-items: center; gap: 12px;">
+                <i data-lucide="settings-2"></i>
+                Configurações do Sistema
+            </h1>
+            <a href="/Account/Profile" class="back-link">
+                <i data-lucide="arrow-left"></i>
+                Voltar para Conta
+            </a>
+        </div>
+
+        <div class="card glass-panel">
+            <h3 class="card-title" style="padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;">
+                <i data-lucide="info"></i>
+                Informações do Sistema
+            </h3>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>Versão do PixelDisplay240</h4>
+                    <p>Versão atual da aplicação</p>
+                </div>
+                <span class="setting-value">v5.1.0 Inside</span>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>Ambiente</h4>
+                    <p>Ambiente de execução</p>
+                </div>
+                <span class="setting-value" id="envValue">-</span>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>API Base URL</h4>
+                    <p>Endpoint da API</p>
+                </div>
+                <span class="setting-value" id="apiUrl">-</span>
+            </div>
+        </div>
+
+        <div class="card glass-panel">
+            <h3 class="card-title" style="padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;">
+                <i data-lucide="database"></i>
+                Cache e Armazenamento
+            </h3>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>LocalStorage</h4>
+                    <p>Dados armazenados localmente</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="clearLocalStorage()">
+                    <i data-lucide="trash-2"></i>
+                    Limpar
+                </button>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>SessionStorage</h4>
+                    <p>Dados da sessão atual</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="clearSessionStorage()">
+                    <i data-lucide="trash-2"></i>
+                    Limpar
+                </button>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>Service Worker Cache</h4>
+                    <p>Cache de assets e recursos</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="clearCaches()">
+                    <i data-lucide="refresh-cw"></i>
+                    Atualizar
+                </button>
+            </div>
+        </div>
+
+        <div class="card glass-panel">
+            <h3 class="card-title" style="padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;">
+                <i data-lucide="code"></i>
+                Desenvolvedores
+            </h3>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>Token JWT</h4>
+                    <p>Token de autenticação atual</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="copyToken()">
+                    <i data-lucide="copy"></i>
+                    Copiar
+                </button>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>Console de Debug</h4>
+                    <p>Ativar logs detalhados no console</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="toggleDebug()">
+                    <i data-lucide="terminal"></i>
+                    Ativar
+                </button>
+            </div>
+
+            <div class="info-box">
+                <strong>Dica:</strong> Use <code>Ctrl+Shift+I</code> para abrir as ferramentas de desenvolvedor 
+                e visualizar os logs do console.
+            </div>
+        </div>
+
+        <div class="card glass-panel">
+            <h3 class="card-title" style="padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;">
+                <i data-lucide="link"></i>
+                Links Úteis
+            </h3>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>Documentação da API</h4>
+                    <p>Referência completa dos endpoints</p>
+                </div>
+                <a href="/swagger" target="_blank" class="btn btn-primary btn-sm">
+                    <i data-lucide="external-link"></i>
+                    Abrir
+                </a>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>Health Check</h4>
+                    <p>Status do servidor</p>
+                </div>
+                <a href="/health" target="_blank" class="btn btn-secondary btn-sm">
+                    <i data-lucide="activity"></i>
+                    Verificar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/js/account-settings.js"></script>
+</body>
+</html>

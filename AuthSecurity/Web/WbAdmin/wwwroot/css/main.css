@@ -1,0 +1,246 @@
+:root {
+    /* DevOps Palette */
+    --bg-dark: #0f172a;
+    --card-bg: #1e293b;
+    --primary: #38bdf8;
+    --primary-hover: #0ea5e9;
+    --secondary: #334155;
+    --accent: #818cf8;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #334155;
+
+    /* Status Colors */
+    --success: #4ade80;
+    --sync: #22c55e;
+    --error: #ef4444;
+    --warning: #f59e0b;
+    --toast-error: linear-gradient(135deg, #7f1d1d, #991b1b);
+    --toast-warning: linear-gradient(135deg, #78350f, #92400e);
+
+    /* Branding Gradient */
+    --brand-gradient: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+
+    --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+}
+
+/* Glassmorphism utility with DevOps depth */
+.glass-panel {
+    background: rgba(30, 41, 59, 0.7);
+    /* Based on --card-bg */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4 {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+/* Form elements */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(15, 23, 42, 0.5);
+    /* Based on --bg-dark */
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+button {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: var(--primary);
+    color: var(--bg-dark);
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+pre {
+    background: #0000004d;
+    padding: 1rem;
+    border-radius: 8px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    color: var(--success);
+    /* Legacy "live" feel from DevOps */
+}
+
+/* Layout containers */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.centered-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+/* Dashboard Pro Layout */
+.dashboard-grid {
+    display: grid;
+    grid-template-areas:
+        "sidebar header"
+        "sidebar main"
+        "sidebar footer";
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 70px 1fr 50px;
+    height: 100vh;
+}
+
+header {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-dark);
+}
+
+aside {
+    grid-area: sidebar;
+    border-right: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--card-bg);
+}
+
+section.main-content {
+    grid-area: main;
+    padding: 2.5rem;
+    overflow-y: auto;
+}
+
+footer {
+    grid-area: footer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    background: var(--bg-dark);
+}
+
+/* Nav styles */
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background: var(--secondary);
+    color: var(--text-main);
+}
+
+.nav-link.active {
+    border-left: 3px solid var(--primary);
+}
+
+/* Dashboard Cards */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    background: var(--card-bg);
+    padding: 1.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "main"
+            "footer";
+    }
+
+    aside {
+        display: none;
+    }
+}

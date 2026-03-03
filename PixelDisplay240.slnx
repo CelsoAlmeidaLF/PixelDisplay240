@@ -1,3 +1,9 @@
 <Solution>
-  <Project Path="Inside/PixelDisplay240.csproj" />
+  <Folder Name="/Engineer/">
+    <Project Path="AuthSecurity/Kernel/Systekna.Kernel/Systekna.Security.csproj" />
+  </Folder>
+  <Folder Name="/Web/">
+    <Project Path="AuthSecurity/Web/WbAdmin/WbGovAdmin.csproj" />
+    <Project Path="Inside/PixelDisplay240.csproj" />
+  </Folder>
 </Solution>

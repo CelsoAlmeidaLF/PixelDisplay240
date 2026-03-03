@@ -1076,65 +1076,113 @@ class ApiClient extends EditorModule {
     constructor(app) {
         super();
         this.app = app;
-        this.tokenKey = 'pixeldisplay240_jwt';
-        this.accessKeyKey = 'pixeldisplay240_access_key';
-        this.tokenEndpoint = '/api/auth/token';
-    }
-
-    setAccessKey(key) {
-        localStorage.setItem(this.accessKeyKey, key);
-        localStorage.removeItem(this.tokenKey);
-    }
-
-    getAccessKey() {
-        return localStorage.getItem(this.accessKeyKey) || '';
+        // Usa o mesmo token do login (armazenado pelo sistema de autenticação)
+        this.tokenKey = 'pd240_token';
+        this.refreshTokenKey = 'pd240_refresh_token';
     }
 
     _getToken() {
-        return localStorage.getItem(this.tokenKey) || '';
+        return localStorage.getItem(this.tokenKey) || sessionStorage.getItem(this.tokenKey) || '';
+    }
+
+    _getRefreshToken() {
+        return localStorage.getItem(this.refreshTokenKey) || sessionStorage.getItem(this.refreshTokenKey) || '';
     }
 
     _isTokenValid(token) {
+        if (!token) return false;
         try {
-            const payload = JSON.parse(atob(token.split('.')[1] || ''));
+            const parts = token.split('.');
+            if (parts.length !== 3) return false;
+            const payload = JSON.parse(atob(parts[1]));
             const exp = payload.exp ? payload.exp * 1000 : 0;
+            // Token é válido se expirar em mais de 1 minuto
             return exp > Date.now() + 60000;
         } catch {
             return false;
         }
     }
 
-    async _fetchToken() {
-        const resp = await fetch(this.tokenEndpoint, { method: 'GET' });
-        if (!resp.ok) throw new Error('token_failed');
+    async _refreshToken() {
+        const refreshToken = this._getRefreshToken();
+        const currentToken = this._getToken();
+        
+        if (!refreshToken || !currentToken) {
+            throw new Error('no_refresh_token');
+        }
+
+        const resp = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: currentToken, refreshToken: refreshToken })
+        });
+
+        if (!resp.ok) throw new Error('refresh_failed');
+        
         const data = await resp.json();
         if (data?.token) {
             localStorage.setItem(this.tokenKey, data.token);
+            if (data.refreshToken) {
+                localStorage.setItem(this.refreshTokenKey, data.refreshToken);
+            }
             return data.token;
         }
-        throw new Error('token_invalid');
+        throw new Error('refresh_invalid');
     }
 
     async ensureToken() {
         const token = this._getToken();
-        if (token && this._isTokenValid(token)) return token;
-        return this._fetchToken();
+        
+        // Se o token é válido, usa ele
+        if (token && this._isTokenValid(token)) {
+            return token;
+        }
+
+        // Tenta renovar o token
+        try {
+            return await this._refreshToken();
+        } catch (e) {
+            // Se não conseguir renovar, redireciona para login
+            console.warn('[ApiClient] Token inválido ou expirado. Redirecionando para login...');
+            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+            throw new Error('auth_required');
+        }
     }
 
     async request(url, options = {}) {
         try {
             const token = await this.ensureToken();
             const headers = new Headers(options.headers || {});
-            headers.set('Authorization', `Bearer ${token} `);
-            return fetch(url, { ...options, headers });
+            headers.set('Authorization', `Bearer ${token}`);
+            
+            const response = await fetch(url, { ...options, headers });
+            
+            // Se receber 401 ou 403, pode ser token expirado - tenta renovar uma vez
+            if (response.status === 401 || response.status === 403) {
+                try {
+                    const newToken = await this._refreshToken();
+                    headers.set('Authorization', `Bearer ${newToken}`);
+                    return fetch(url, { ...options, headers });
+                } catch {
+                    window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+                    throw new Error('auth_required');
+                }
+            }
+            
+            return response;
         } catch (e) {
-            if (e.message === 'missing_access_key') {
-                this.app.toast.show('error', 'Auth', 'Configure a Chave de Acesso API.');
+            if (e.message === 'auth_required') {
+                // Já redirecionado
             } else {
-                // this.app.toast.show('error', 'Auth', 'Falha ao autenticar na API.');
+                console.error('[ApiClient] Request failed:', e.message);
             }
             throw e;
         }
+    }
+
+    // Propriedade para compatibilidade com código existente
+    get token() {
+        return this._getToken();
     }
 }
 
