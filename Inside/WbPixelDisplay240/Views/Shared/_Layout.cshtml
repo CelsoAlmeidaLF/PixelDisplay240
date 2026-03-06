@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - PixelDisplay240 IDE</title>
+    <link rel="icon" href="~/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+</head>
+<body class="theme-default">
+    <div id="app-loading-overlay">
+        <div class="loader-spinner"></div> 
+        <h2 style="color: white; font-family: 'Outfit'; margin: 0;">PixelDisplay240 IDE</h2>
+        <p id="loading-status" style="color: #64748b; font-family: 'JetBrains Mono'; font-size: 0.8rem; margin-top: 10px;">Carregando módulos...</p>
+    </div>
+
+    <div class="app-container">
+        @RenderBody()
+    </div>
+
+    @* Carregamento via System Runtime (Orquestrador) *@
+    <script src="~/js/system-runtime.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
