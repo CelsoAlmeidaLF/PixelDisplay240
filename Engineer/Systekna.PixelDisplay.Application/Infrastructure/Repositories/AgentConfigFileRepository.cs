@@ -1,16 +1,21 @@
-using PixelDisplay240Api.Models;
 using System.Text.Json;
+using Systekna.PixelDisplay.Application.Domain.Entities;
+using Systekna.PixelDisplay.Application.Infrastructure.Interfaces;
 
-namespace PixelDisplay240Api.Services;
+namespace Systekna.PixelDisplay.Application.Infrastructure.Repositories;
 
-public class AgentConfigService
+/// <summary>
+/// Repositório para configuração de agentes.
+/// Implementação baseada em arquivo JSON.
+/// </summary>
+public class AgentConfigFileRepository : IAgentConfigRepository
 {
     private readonly string _configPath;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public AgentConfigService(IWebHostEnvironment env)
+    public AgentConfigFileRepository(string basePath)
     {
-        _configPath = Path.Combine(env.ContentRootPath, "agent-config.json");
+        _configPath = Path.Combine(basePath, "agent-config.json");
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
             WriteIndented = true

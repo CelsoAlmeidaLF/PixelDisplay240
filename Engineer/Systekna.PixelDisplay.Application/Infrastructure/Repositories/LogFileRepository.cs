@@ -1,16 +1,20 @@
-
 using System.Text.Json;
+using Systekna.PixelDisplay.Application.Infrastructure.Interfaces;
 
-namespace PixelDisplay240Api.Services;
+namespace Systekna.PixelDisplay.Application.Infrastructure.Repositories;
 
-public class LogService
+/// <summary>
+/// Repositório para logs de erro.
+/// Implementação baseada em arquivos JSON.
+/// </summary>
+public class LogFileRepository : ILogRepository
 {
     private readonly string _logsPath;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public LogService(IWebHostEnvironment env)
+    public LogFileRepository(string basePath)
     {
-        _logsPath = Path.Combine(env.ContentRootPath, "logs");
+        _logsPath = Path.Combine(basePath, "logs");
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
             WriteIndented = true

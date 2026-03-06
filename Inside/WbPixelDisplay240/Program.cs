@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using PixelDisplay240Api.Models;
-using PixelDisplay240Api.Services;
+using Systekna.PixelDisplay.Application;
+using Systekna.PixelDisplay.Application.Domain.Entities;
+using Systekna.PixelDisplay.Application.Infrastructure.Interfaces;
+using Systekna.PixelDisplay.Application.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -14,12 +16,8 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     WebRootPath = "wwwroot"
 });
 
-// Register services
-builder.Services.AddSingleton<AgentConfigService>();
-builder.Services.AddSingleton<LogService>();
-builder.Services.AddSingleton<PrototypeService>();
-builder.Services.AddSingleton<HardwareExportService>();
-builder.Services.AddHttpClient<AIService>();
+// Register services from Application layer
+builder.Services.AddPixelDisplayApplication(builder.Environment.ContentRootPath);
 builder.Services.AddAuthorization();
 builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
@@ -87,13 +85,13 @@ app.MapGet("/api/auth/token", (HttpRequest request) =>
 
 var api = app.MapGroup("/api").RequireAuthorization();
 
-api.MapGet("/agents", (AgentConfigService configService) =>
+api.MapGet("/agents", (IAgentConfigRepository configService) =>
 {
     var data = configService.LoadConfig();
     return Results.Json(data, jsonOptions);
 });
 
-api.MapPost("/agents", async (HttpRequest request, AgentConfigService configService) =>
+api.MapPost("/agents", async (HttpRequest request, IAgentConfigRepository configService) =>
 {
     var data = await request.ReadFromJsonAsync<AgentConfig>(jsonOptions);
     if (data == null) return Results.BadRequest(new { message = "Invalid payload" });
@@ -101,7 +99,7 @@ api.MapPost("/agents", async (HttpRequest request, AgentConfigService configServ
     return Results.Json(new { ok = true }, jsonOptions);
 });
 
-api.MapPost("/logs", async (HttpRequest request, LogService logService) =>
+api.MapPost("/logs", async (HttpRequest request, ILogRepository logService) =>
 {
     if (!enableLogs) return Results.NotFound();
     using var doc = await JsonDocument.ParseAsync(request.Body);
@@ -114,7 +112,7 @@ api.MapPost("/logs", async (HttpRequest request, LogService logService) =>
     return Results.Ok();
 });
 
-api.MapPost("/config", async (HttpRequest request, AgentConfigService configService) =>
+api.MapPost("/config", async (HttpRequest request, IAgentConfigRepository configService) =>
 {
     using var doc = await JsonDocument.ParseAsync(request.Body);
     var root = doc.RootElement;
@@ -130,7 +128,7 @@ api.MapPost("/config", async (HttpRequest request, AgentConfigService configServ
     return Results.Ok(new { message = "Configuração salva com segurança!" });
 });
 
-api.MapGet("/ai/image", async (string prompt, int? seed, AgentConfigService configService, AIService aiService) =>
+api.MapGet("/ai/image", async (string prompt, int? seed, IAgentConfigRepository configService, IAIService aiService) =>
 {
     if (string.IsNullOrWhiteSpace(prompt)) return Results.BadRequest(new { message = "Prompt required" });
 
@@ -138,12 +136,12 @@ api.MapGet("/ai/image", async (string prompt, int? seed, AgentConfigService conf
     var apiKey = config.Gemini.ApiKey?.Trim() ?? string.Empty;
     var finalSeed = seed ?? new Random().Next(1, 1000000);
 
-    var (success, bytes, error) = await aiService.GeneratePixelArtAsync(apiKey, prompt, finalSeed);
+    var result = await aiService.GeneratePixelArtAsync(apiKey, prompt, finalSeed);
 
-    if (!success)
+    if (!result.Success)
     {
-        var isQuota = (error ?? string.Empty).Contains("RESOURCE_EXHAUSTED", StringComparison.OrdinalIgnoreCase)
-            || (error ?? string.Empty).Contains("quota", StringComparison.OrdinalIgnoreCase);
+        var isQuota = (result.Error ?? string.Empty).Contains("RESOURCE_EXHAUSTED", StringComparison.OrdinalIgnoreCase)
+            || (result.Error ?? string.Empty).Contains("quota", StringComparison.OrdinalIgnoreCase);
 
         if (enablePlaceholder && File.Exists(placeholderPath))
         {
@@ -153,13 +151,13 @@ api.MapGet("/ai/image", async (string prompt, int? seed, AgentConfigService conf
 
         var status = isQuota ? StatusCodes.Status429TooManyRequests : StatusCodes.Status502BadGateway;
         var message = isQuota ? "Quota exceeded" : "AI error";
-        return Results.Json(new { message, body = error }, statusCode: status);
+        return Results.Json(new { message, body = result.Error }, statusCode: status);
     }
 
-    return Results.File(bytes!, "image/png");
+    return Results.File(result.Data!, "image/png");
 });
 
-api.MapPost("/ai/auto-layout", async (HttpRequest request, AgentConfigService configService, AIService aiService) =>
+api.MapPost("/ai/auto-layout", async (HttpRequest request, IAgentConfigRepository configService, IAIService aiService) =>
 {
     using var doc = await JsonDocument.ParseAsync(request.Body);
     var root = doc.RootElement;
@@ -169,17 +167,16 @@ api.MapPost("/ai/auto-layout", async (HttpRequest request, AgentConfigService co
     var config = configService.LoadConfig();
     var apiKey = config.Gemini.ApiKey?.Trim() ?? string.Empty;
 
-    var (success, resultJson, error) = await aiService.OptimizeLayoutAsync(apiKey, elementsJson, intent);
+    var result = await aiService.OptimizeLayoutAsync(apiKey, elementsJson, intent);
 
-    if (!success) return Results.Problem(error ?? "AI Optimization failed", statusCode: 502);
+    if (!result.Success) return Results.Problem(result.Error ?? "AI Optimization failed", statusCode: 502);
     
-    return Results.Content(resultJson!, "application/json");
+    return Results.Content(result.ElementsJson!, "application/json");
 });
 
-// --- PROTOTYPE API (Unified Pattern) ---
-api.MapGet("/prototype", (PrototypeService service) => Results.Json(service.GetProject(), jsonOptions));
+api.MapGet("/prototype", (PrototypeApplicationService service) => Results.Json(service.GetProject(), jsonOptions));
 
-api.MapPost("/prototype/save", async (HttpRequest request, PrototypeService service) => {
+api.MapPost("/prototype/save", async (HttpRequest request, PrototypeApplicationService service) => {
     try {
         var project = await request.ReadFromJsonAsync<PrototypeProject>(jsonOptions);
         if (project != null) service.SaveProject(project);
@@ -189,7 +186,7 @@ api.MapPost("/prototype/save", async (HttpRequest request, PrototypeService serv
     }
 });
 
-api.MapPost("/prototype/screen/background", async (HttpRequest request, PrototypeService service) => {
+api.MapPost("/prototype/screen/background", async (HttpRequest request, PrototypeApplicationService service) => {
     try {
         using var doc = await JsonDocument.ParseAsync(request.Body);
         var root = doc.RootElement;
@@ -206,7 +203,7 @@ api.MapPost("/prototype/screen/background", async (HttpRequest request, Prototyp
     }
 });
 
-api.MapPost("/prototype/screen/update", async (HttpRequest request, PrototypeService service) => {
+api.MapPost("/prototype/screen/update", async (HttpRequest request, PrototypeApplicationService service) => {
     try {
         using var doc = await JsonDocument.ParseAsync(request.Body);
         var root = doc.RootElement;
@@ -222,7 +219,7 @@ api.MapPost("/prototype/screen/update", async (HttpRequest request, PrototypeSer
     }
 });
 
-api.MapGet("/prototype/export", (HardwareExportService exportService, PrototypeService service) => {
+api.MapGet("/prototype/export", (HardwareExportApplicationService exportService, PrototypeApplicationService service) => {
     var project = service.GetProject();
     var zipBytes = exportService.GenerateProjectZip(project);
     return Results.File(zipBytes, "application/zip", "PixelDisplay240_Project.zip");
@@ -236,7 +233,7 @@ api.MapGet("/hardware/scan", () => {
     });
 });
 
-api.MapPost("/hardware/export", async (HttpRequest request, HardwareExportService exportService) => {
+api.MapPost("/hardware/export", async (HttpRequest request, HardwareExportApplicationService exportService) => {
     try {
         var project = await request.ReadFromJsonAsync<PrototypeProject>(jsonOptions);
         if (project == null) return Results.BadRequest("Invalid project data");
@@ -247,7 +244,6 @@ api.MapPost("/hardware/export", async (HttpRequest request, HardwareExportServic
     }
 });
 
-// Serve a tiny inline SVG as favicon to avoid 404 noise
 var faviconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%2338bdf8'/><text x='8' y='11' font-size='10' text-anchor='middle' fill='%23000' font-family='Arial'>PD</text></svg>";
 app.MapGet("/favicon.svg", () => Results.Content(faviconSvg, "image/svg+xml"));
 app.MapGet("/favicon.ico", () => Results.Content(faviconSvg, "image/svg+xml"));
