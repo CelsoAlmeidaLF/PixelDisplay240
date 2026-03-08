@@ -27,7 +27,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Engineer\Systekna.PixelDisplay.Application\Systekna.PixelDisplay.Application.csproj" />
+    <ProjectReference Include="..\..\AuthSecurity\Kernel\Systekna.Security\Systekna.Security.csproj" />
+    <ProjectReference Include="..\..\Engineer\Systekna.Domain\Systekna.Domain.csproj" />
+    <ProjectReference Include="..\..\Engineer\Systekna.Infrasctruture\Systekna.Infrasctruture.csproj" />
+    <ProjectReference Include="..\..\Engineer\Systekna.PixelDisplay\Systekna.PixelDisplay.csproj" />
   </ItemGroup>
 
 </Project>
