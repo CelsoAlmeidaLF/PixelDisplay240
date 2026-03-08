@@ -16,7 +16,6 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     WebRootPath = "wwwroot"
 });
 
-// Register services from Application layer
 builder.Services.AddPixelDisplayApplication(builder.Environment.ContentRootPath);
 builder.Services.AddAuthorization();
 builder.Services.AddRazorPages();
@@ -82,6 +81,8 @@ app.MapGet("/api/auth/token", (HttpRequest request) =>
 
     return Results.Json(new { token = tokenHandler.WriteToken(token), expiresAt = expires }, jsonOptions);
 });
+
+#region API System
 
 var api = app.MapGroup("/api").RequireAuthorization();
 
@@ -243,6 +244,8 @@ api.MapPost("/hardware/export", async (HttpRequest request, HardwareExportApplic
         return Results.Problem(e.Message);
     }
 });
+
+#endregion
 
 var faviconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%2338bdf8'/><text x='8' y='11' font-size='10' text-anchor='middle' fill='%23000' font-family='Arial'>PD</text></svg>";
 app.MapGet("/favicon.svg", () => Results.Content(faviconSvg, "image/svg+xml"));
