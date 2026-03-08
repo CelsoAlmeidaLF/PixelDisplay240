@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/Engineer/">
-    <Project Path="Engineer/Systekna.PixelDisplay.Application/Systekna.PixelDisplay.Application.csproj" Id="10f1914c-2bd0-4081-9af4-8118a23c8113" />
+    <Project Path="Engineer/Systekna.PixelDisplay/Systekna.PixelDisplay.csproj" />
   </Folder>
   <Folder Name="/Web/">
     <Project Path="Inside/WbPixelDisplay240/WbPixelDisplay240.csproj" Id="046a1c08-9832-4ae1-aa3a-80aa14a33efd" />
